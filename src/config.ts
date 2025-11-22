@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { getStateDirForFolder, getHistoryLogPath } from './utils/stateDir';
+import { logger } from './logger';
 
 export const SUPPORTED_TOOL_IDS = [
   'read_file',
@@ -196,6 +197,14 @@ function normalizeConfig(
   const usingRootDirectories = typedRoot.rootDirectories !== undefined;
   const usingFolders = typedRoot.folders !== undefined;
 
+  logger.debug('Normalizing config.', {
+    sourcePath,
+    hasRootDirectories: usingRootDirectories,
+    hasFolders: usingFolders,
+    rootDirectoriesValue: typedRoot.rootDirectories,
+    foldersValue: typedRoot.folders
+  });
+
   if (usingRootDirectories && usingFolders) {
     throw new SmartfolderConfigError(
       'Cannot use both `rootDirectories` and `folders` in the same config. Choose one approach.'
@@ -221,7 +230,9 @@ function normalizeConfig(
     // Legacy folders mode
     if (!Array.isArray(typedRoot.folders) || typedRoot.folders.length === 0) {
       throw new SmartfolderConfigError(
-        'Provide either `rootDirectories` (for discovery mode) or `folders` (for static mode).'
+        `Provide either \`rootDirectories\` (for discovery mode) or \`folders\` (for static mode).\n` +
+        `Config file: ${sourcePath}\n` +
+        `Found properties: ${Object.keys(typedRoot).join(', ')}`
       );
     }
 

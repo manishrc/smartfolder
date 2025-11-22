@@ -257,10 +257,16 @@ function consumeOptionValue(
 
 async function handleRunCommand(options: RunCommandOptions): Promise<void> {
   const configPath = await resolveConfigPath('run', options.config);
+  logger.info('Loading config file.', { configPath });
   const dryRun = Boolean(options.dryRun);
   const runOnce = Boolean(options.runOnce);
   const verbose = Boolean(options.verbose);
   const config = await loadConfig(configPath, { dryRun });
+  logger.debug('Config loaded successfully.', {
+    hasRootDirectories: !!config.rootDirectories,
+    hasFolders: !!config.folders,
+    rootDirectoriesCount: config.rootDirectories?.length ?? 0
+  });
   await startRunSession(config, { dryRun, runOnce, verbose });
 }
 
