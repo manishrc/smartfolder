@@ -27,24 +27,24 @@ export class ArchiveContentProvider extends ContentProvider {
     };
   }
 
-  protected shouldSendContent(metadata: FileMetadata, size: number): boolean {
+  protected shouldSendContent(_metadata: FileMetadata, _size: number): boolean {
     // Never send archive binary content to AI
     // The file list is included in metadata
     return false;
   }
 
   protected determineContentType(
-    metadata: FileMetadata,
-    size: number
+    _metadata: FileMetadata,
+    _size: number
   ): 'full' | 'partial' {
     // Not applicable - archives are always metadata-only
     return 'full';
   }
 
   protected async extractContent(
-    filePath: string,
-    type: 'full' | 'partial',
-    metadata: FileMetadata
+    _filePath: string,
+    _type: 'full' | 'partial',
+    _metadata: FileMetadata
   ): Promise<FileContent['content']> {
     // Archives are metadata-only
     return {
@@ -52,7 +52,7 @@ export class ArchiveContentProvider extends ContentProvider {
     };
   }
 
-  protected getAvailableTools(category: FileCategory): string[] {
+  protected getAvailableTools(_category: FileCategory): string[] {
     // Archives can be renamed or moved, potentially extracted later
     return ['rename_file', 'create_folder'];
   }

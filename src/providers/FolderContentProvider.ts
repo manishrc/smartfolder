@@ -27,23 +27,23 @@ export class FolderContentProvider extends ContentProvider {
     };
   }
 
-  protected shouldSendContent(metadata: FileMetadata, size: number): boolean {
+  protected shouldSendContent(_metadata: FileMetadata, _size: number): boolean {
     // Folders are always metadata-only (no content to send)
     return false;
   }
 
   protected determineContentType(
-    metadata: FileMetadata,
-    size: number
+    _metadata: FileMetadata,
+    _size: number
   ): 'full' | 'partial' {
     // Not applicable - folders are always metadata-only
     return 'full';
   }
 
   protected async extractContent(
-    filePath: string,
-    type: 'full' | 'partial',
-    metadata: FileMetadata
+    _filePath: string,
+    _type: 'full' | 'partial',
+    _metadata: FileMetadata
   ): Promise<FileContent['content']> {
     // Folders are metadata-only
     return {
@@ -51,7 +51,7 @@ export class FolderContentProvider extends ContentProvider {
     };
   }
 
-  protected getAvailableTools(category: FileCategory): string[] {
+  protected getAvailableTools(_category: FileCategory): string[] {
     // Tools available for folder operations
     return ['rename_file', 'create_folder'];
   }

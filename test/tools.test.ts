@@ -4,7 +4,17 @@ import path from 'path';
 
 import { FileToolRegistry } from '../src/tools/fileTools';
 import { FolderConfig } from '../src/config';
-import { logger } from '../src/logger';
+
+// Mock logger to avoid pino import issues in test environment
+const logger = {
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  fatal: jest.fn(),
+  trace: jest.fn(),
+  child: jest.fn(() => logger),
+} as any;
 
 function createFolderConfig(root: string): FolderConfig {
   return {

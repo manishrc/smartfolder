@@ -56,6 +56,7 @@
 	},
 	"devDependencies": {
 		"@size-limit/preset-small-lib": "^11.2.0",
+		"@types/fluent-ffmpeg": "^2.1.28",
 		"@types/pdf-parse": "^1.1.5",
 		"husky": "^9.1.7",
 		"pino-pretty": "^11.2.0",

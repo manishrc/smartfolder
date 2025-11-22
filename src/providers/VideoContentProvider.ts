@@ -29,15 +29,15 @@ export class VideoContentProvider extends ContentProvider {
     };
   }
 
-  protected shouldSendContent(metadata: FileMetadata, size: number): boolean {
+  protected shouldSendContent(_metadata: FileMetadata, size: number): boolean {
     // Only send if model supports video AND size is reasonable
     const threshold = this.thresholds.video?.fullContentMax ?? 20 * 1024 * 1024;
     return this.modelCapability.supportsVideo && size <= threshold;
   }
 
   protected determineContentType(
-    metadata: FileMetadata,
-    size: number
+    _metadata: FileMetadata,
+    _size: number
   ): 'full' | 'partial' {
     // Videos are always full or nothing
     return 'full';
@@ -45,8 +45,8 @@ export class VideoContentProvider extends ContentProvider {
 
   protected async extractContent(
     filePath: string,
-    type: 'full' | 'partial',
-    metadata: FileMetadata
+    _type: 'full' | 'partial',
+    _metadata: FileMetadata
   ): Promise<FileContent['content']> {
     // If model supports video, send as file part
     if (this.modelCapability.supportsVideo) {
@@ -66,7 +66,7 @@ export class VideoContentProvider extends ContentProvider {
     };
   }
 
-  protected getAvailableTools(category: FileCategory): string[] {
+  protected getAvailableTools(_category: FileCategory): string[] {
     return ['rename_file', 'create_folder'];
   }
 }

@@ -28,15 +28,15 @@ export class ImageContentProvider extends ContentProvider {
     };
   }
 
-  protected shouldSendContent(metadata: FileMetadata, size: number): boolean {
+  protected shouldSendContent(_metadata: FileMetadata, size: number): boolean {
     // Only send if model supports images AND size is reasonable
     const threshold = this.thresholds.image?.fullContentMax ?? 5 * 1024 * 1024;
     return this.modelCapability.supportsImages && size <= threshold;
   }
 
   protected determineContentType(
-    metadata: FileMetadata,
-    size: number
+    _metadata: FileMetadata,
+    _size: number
   ): 'full' | 'partial' {
     // Images are always full or nothing (can't partially send an image)
     return 'full';
@@ -44,8 +44,8 @@ export class ImageContentProvider extends ContentProvider {
 
   protected async extractContent(
     filePath: string,
-    type: 'full' | 'partial',
-    metadata: FileMetadata
+    _type: 'full' | 'partial',
+    _metadata: FileMetadata
   ): Promise<FileContent['content']> {
     // Read image file as buffer and encode to base64
     const buffer = await fs.readFile(filePath);
@@ -58,7 +58,7 @@ export class ImageContentProvider extends ContentProvider {
     };
   }
 
-  protected getAvailableTools(category: FileCategory): string[] {
+  protected getAvailableTools(_category: FileCategory): string[] {
     // Images are typically renamed or moved, not edited
     return ['rename_file', 'create_folder'];
   }

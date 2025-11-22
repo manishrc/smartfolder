@@ -28,15 +28,15 @@ export class PDFContentProvider extends ContentProvider {
     };
   }
 
-  protected shouldSendContent(metadata: FileMetadata, size: number): boolean {
+  protected shouldSendContent(_metadata: FileMetadata, size: number): boolean {
     // Send if model supports PDF natively AND size is reasonable
     const threshold = this.thresholds.pdf?.fullContentMax ?? 10 * 1024 * 1024;
     return this.modelCapability.supportsPDF && size <= threshold;
   }
 
   protected determineContentType(
-    metadata: FileMetadata,
-    size: number
+    _metadata: FileMetadata,
+    _size: number
   ): 'full' | 'partial' {
     // PDFs are sent in full if model supports them
     return 'full';
@@ -44,8 +44,8 @@ export class PDFContentProvider extends ContentProvider {
 
   protected async extractContent(
     filePath: string,
-    type: 'full' | 'partial',
-    metadata: FileMetadata
+    _type: 'full' | 'partial',
+    _metadata: FileMetadata
   ): Promise<FileContent['content']> {
     // If model supports PDFs natively, send as file part
     if (this.modelCapability.supportsPDF) {
@@ -66,7 +66,7 @@ export class PDFContentProvider extends ContentProvider {
     };
   }
 
-  protected getAvailableTools(category: FileCategory): string[] {
+  protected getAvailableTools(_category: FileCategory): string[] {
     return ['rename_file', 'create_folder'];
   }
 }
