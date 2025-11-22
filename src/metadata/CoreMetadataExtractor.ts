@@ -42,14 +42,31 @@ export class CoreMetadataExtractor {
   }
 
   /**
-   * Calculate SHA-256 hash of a file
-   * Used for deduplication and integrity checks
+   * Calculate SHA-256 hash of a file using streaming
+   * Uses Node.js native crypto with streaming to avoid loading entire file into memory
+   * This is critical for large files (e.g., 4GB videos) to prevent OOM errors
    *
    * @param filePath - Absolute path to the file
    * @returns SHA-256 hash as hex string
    */
   private static async calculateHash(filePath: string): Promise<string> {
-    const buffer = await fs.readFile(filePath);
-    return crypto.createHash('sha256').update(buffer).digest('hex');
+    const { createReadStream } = await import('fs');
+    const hash = crypto.createHash('sha256');
+
+    return new Promise((resolve, reject) => {
+      const stream = createReadStream(filePath);
+
+      stream.on('data', (chunk: string | Buffer) => {
+        hash.update(chunk);
+      });
+
+      stream.on('end', () => {
+        resolve(hash.digest('hex'));
+      });
+
+      stream.on('error', (err: Error) => {
+        reject(err);
+      });
+    });
   }
 }

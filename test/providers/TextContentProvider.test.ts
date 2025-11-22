@@ -109,9 +109,11 @@ describe('TextContentProvider', () => {
   describe('Head/Tail Truncation', () => {
     it('should include first 50 and last 50 lines for large files', async () => {
       const filePath = path.join(tempDir, 'truncate.txt');
-      const lines = Array(200)
+      // Create file >10KB to trigger partial content
+      // Each line is ~100 bytes, need >102 lines to exceed 10KB
+      const lines = Array(500)
         .fill(null)
-        .map((_, i) => `Line ${i + 1}`);
+        .map((_, i) => `Line ${i + 1} with some padding content to make it larger than a few bytes per line`);
       await fs.writeFile(filePath, lines.join('\n'));
 
       const result = await provider.provideContent(filePath);
@@ -120,15 +122,16 @@ describe('TextContentProvider', () => {
       const data = result.content?.data as string;
       expect(data).toContain('Line 1');
       expect(data).toContain('Line 50');
-      expect(data).toContain('Line 151'); // Last 50 lines start at 151
-      expect(data).toContain('Line 200');
+      expect(data).toContain('Line 451'); // Last 50 lines start at 451 (500-49)
+      expect(data).toContain('Line 500');
       expect(data).toContain('lines omitted');
     });
 
     it('should preserve CSV header separately', async () => {
       const filePath = path.join(tempDir, 'data.csv');
       const header = 'id,name,email,age';
-      const rows = Array(200)
+      // Create >10KB file to trigger partial content
+      const rows = Array(500)
         .fill(null)
         .map((_, i) => `${i},User${i},user${i}@example.com,${20 + i}`);
       await fs.writeFile(filePath, [header, ...rows].join('\n'));

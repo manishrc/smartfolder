@@ -6,9 +6,9 @@ import { SizeThresholds } from '../types/FileContent';
  */
 export const DEFAULT_THRESHOLDS: SizeThresholds = {
   text: {
-    fullContentMax: 10 * 1024, // 10KB
-    partialContentMax: 100 * 1024, // 100KB
-    metadataOnlyAbove: 100 * 1024, // 100KB
+    fullContentMax: 10 * 1024, // 10KB - send full content
+    partialContentMax: 50 * 1024, // 50KB - send head/tail
+    metadataOnlyAbove: 100 * 1024, // 100KB - metadata only
   },
   image: {
     fullContentMax: 5 * 1024 * 1024, // 5MB

@@ -4,16 +4,22 @@ import * as path from 'path';
 
 /**
  * Folder metadata extractor
- * Analyzes folder contents recursively
+ * Analyzes folder contents recursively with depth limit
  */
 export class FolderExtractor {
+  private static readonly MAX_DEPTH = 10; // Prevent stack overflow on deep directories
+
   /**
    * Extract metadata from a folder
    *
    * @param folderPath - Absolute path to the folder
+   * @param maxDepth - Maximum recursion depth (default: 10)
    * @returns Folder metadata
    */
-  static async extract(folderPath: string): Promise<FolderMetadata> {
+  static async extract(
+    folderPath: string,
+    maxDepth: number = this.MAX_DEPTH
+  ): Promise<FolderMetadata> {
     const metadata: FolderMetadata = {
       fileCount: 0,
       subfolderCount: 0,
@@ -21,7 +27,7 @@ export class FolderExtractor {
       types: {},
     };
 
-    await this.analyzeFolder(folderPath, metadata);
+    await this.analyzeFolder(folderPath, metadata, 0, maxDepth);
 
     return metadata;
   }
@@ -31,7 +37,9 @@ export class FolderExtractor {
    */
   private static async analyzeFolder(
     folderPath: string,
-    metadata: FolderMetadata
+    metadata: FolderMetadata,
+    currentDepth: number,
+    maxDepth: number
   ): Promise<void> {
     try {
       const entries = await fs.readdir(folderPath, { withFileTypes: true });
@@ -44,8 +52,11 @@ export class FolderExtractor {
           if (entry.name.startsWith('.')) continue;
 
           metadata.subfolderCount++;
-          // Recursively analyze subdirectories
-          await this.analyzeFolder(entryPath, metadata);
+
+          // Only recurse if we haven't reached max depth
+          if (currentDepth < maxDepth) {
+            await this.analyzeFolder(entryPath, metadata, currentDepth + 1, maxDepth);
+          }
         } else if (entry.isFile()) {
           metadata.fileCount++;
 

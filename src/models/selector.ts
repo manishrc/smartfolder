@@ -3,6 +3,11 @@ import { FileCategory } from '../types/FileCategory';
 import { MODEL_REGISTRY } from './registry';
 
 /**
+ * Default fallback model when no better match is found
+ */
+const DEFAULT_MODEL_KEY = 'openai/gpt-4o-mini';
+
+/**
  * Selects the most appropriate model for a given file
  * Based on file category, size, and user preference
  *
@@ -26,9 +31,9 @@ export function selectModelForFile(
     model.bestFor.includes(fileCategory)
   );
 
-  // If no candidates found, fall back to all models
+  // If no candidates found, use default model
   if (candidates.length === 0) {
-    return MODEL_REGISTRY['openai/gpt-4o-mini'];
+    return MODEL_REGISTRY[DEFAULT_MODEL_KEY];
   }
 
   // Score models based on capabilities and cost
@@ -63,8 +68,8 @@ export function selectModelForFile(
   // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
 
-  // Return the highest-scored model
-  return scored[0]?.model || MODEL_REGISTRY['openai/gpt-4o-mini'];
+  // Return the highest-scored model, or default if somehow empty
+  return scored[0]?.model || MODEL_REGISTRY[DEFAULT_MODEL_KEY];
 }
 
 /**

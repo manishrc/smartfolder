@@ -24,7 +24,7 @@ export class TextContentProvider extends ContentProvider {
 
   protected shouldSendContent(_metadata: FileMetadata, size: number): boolean {
     const threshold = this.thresholds.text?.metadataOnlyAbove ?? 100 * 1024;
-    return size <= threshold;
+    return size < threshold;
   }
 
   protected determineContentType(
