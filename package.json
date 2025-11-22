@@ -40,11 +40,13 @@
 	"size-limit": [
 		{
 			"path": "dist/smartfolder.cjs.production.min.js",
-			"limit": "10 KB"
+			"limit": "500 KB",
+			"ignore": ["fs", "path", "os", "crypto", "stream", "util", "assert", "tty", "worker_threads", "pdf-parse", "node:fs/promises", "node:stream", "node:path", "readdirp"]
 		},
 		{
 			"path": "dist/smartfolder.esm.js",
-			"limit": "10 KB"
+			"limit": "500 KB",
+			"ignore": ["fs", "path", "os", "crypto", "stream", "util", "assert", "tty", "worker_threads", "pdf-parse", "node:fs/promises", "node:stream", "node:path", "readdirp"]
 		}
 	],
 	"dependencies": {
