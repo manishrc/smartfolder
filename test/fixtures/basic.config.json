@@ -1,0 +1,19 @@
+{
+  "ai": {
+    "model": "openai/gpt-4o-mini",
+    "apiKey": "$TEST_SMARTFOLDER_KEY",
+    "defaultTools": ["read_file", "write_file"]
+  },
+  "folders": [
+    {
+      "path": "./notes",
+      "prompt": "Organize the research notes and summarize updates.",
+      "ignore": ["**/*.tmp"],
+      "debounceMs": 750,
+      "env": {
+        "TOPIC": "agents",
+        "SECRET_LABEL": "$TEST_FOLDER_SECRET"
+      }
+    }
+  ]
+}
