@@ -26,13 +26,17 @@ describe('loadConfig', () => {
     const folder = config.folders[0];
     expect(path.isAbsolute(folder.path)).toBe(true);
     expect(path.isAbsolute(folder.stateDir)).toBe(true);
-    expect(path.basename(folder.stateDir)).toBe('.smartfolder');
+    // State dir is now centralized in ~/.smartfolder/state/{hash}/
+    expect(folder.stateDir).toContain('.smartfolder');
+    expect(folder.stateDir).toContain('state');
+    expect(path.basename(folder.stateDir)).toMatch(/^[a-f0-9]{16}$/); // 16-char hash
     expect(path.dirname(folder.historyLogPath)).toBe(folder.stateDir);
     expect(folder.debounceMs).toBe(750);
     expect(folder.env.TOPIC).toBe('agents');
     expect(folder.env.SECRET_LABEL).toBe('folder-secret-456');
     expect(folder.dryRun).toBe(true);
     expect(folder.tools).toEqual(['read_file', 'write_file']);
-    expect(folder.ignore).toContain('**/.smartfolder/**');
+    // No longer ignoring .smartfolder since state is centralized
+    expect(folder.ignore).not.toContain('**/.smartfolder/**');
   });
 });

@@ -48,7 +48,7 @@ export class FolderExtractor {
         const entryPath = path.join(folderPath, entry.name);
 
         if (entry.isDirectory()) {
-          // Skip .smartfolder and hidden directories
+          // Skip hidden directories (starting with .)
           if (entry.name.startsWith('.')) continue;
 
           metadata.subfolderCount++;

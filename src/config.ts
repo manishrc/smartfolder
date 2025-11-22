@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { getStateDirForFolder, getHistoryLogPath } from './utils/stateDir';
 
 export const SUPPORTED_TOOL_IDS = ['read_file', 'write_file', 'rename_file', 'move_file', 'grep', 'sed', 'head', 'tail', 'create_folder'] as const;
 
@@ -10,7 +11,8 @@ const DEFAULT_DEBOUNCE_MS = 1500;
 const DEFAULT_MODEL = 'openai/gpt-4o-mini';
 const DEFAULT_TEMPERATURE = 0.2;
 const DEFAULT_MAX_TOOL_CALLS = 8;
-const INTERNAL_IGNORE_PATTERNS = ['**/.smartfolder/**'];
+// No longer need to ignore .smartfolder - state is centralized in ~/.smartfolder/state/
+const INTERNAL_IGNORE_PATTERNS: string[] = [];
 
 interface RawRootConfig {
   ai?: unknown;
@@ -196,8 +198,9 @@ function normalizeFolderConfig(
 
   const folderPath = resolvePath(expectString(folder.path, label('path')), ctx.sourceDir);
   const prompt = expectString(folder.prompt, label('prompt'));
-  const stateDir = path.join(folderPath, '.smartfolder');
-  const historyLogPath = path.join(stateDir, 'history.jsonl');
+  // Use centralized state directory in ~/.smartfolder/state/{folder-hash}/
+  const stateDir = getStateDirForFolder(folderPath);
+  const historyLogPath = getHistoryLogPath(folderPath);
 
   const tools = folder.tools
     ? validateToolList(folder.tools, label('tools'))

@@ -16,6 +16,7 @@ import { logger } from './logger';
 import { FileToolRegistry } from './tools/fileTools';
 import { AiClient } from './workflow/aiClient';
 import { WorkflowOrchestrator } from './workflow/orchestrator';
+import { ensureFolderMetadata } from './utils/stateDir';
 
 const VERSION = '0.1.0';
 const SMARTFOLDER_HOME = process.env.SMARTFOLDER_HOME
@@ -386,11 +387,14 @@ async function ensureStateDirectories(folders: FolderConfig[]): Promise<void> {
   await Promise.all(
     folders.map(async (folder) => {
       try {
+        // Create state directory in ~/.smartfolder/state/{folder-hash}/
         await fs.mkdir(folder.stateDir, { recursive: true });
+        // Create/update metadata file to track watched folders
+        await ensureFolderMetadata(folder.path, folder.prompt);
       } catch (error) {
         logger.warn(
           { folder: folder.path, err: (error as Error).message },
-          'Unable to prepare .smartfolder state directory.'
+          'Unable to prepare centralized state directory.'
         );
       }
     })
