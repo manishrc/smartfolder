@@ -7,7 +7,10 @@ import { Logger } from './logger';
 export interface WatchOptions {
   verbose?: boolean;
   logger: Logger;
-  onFileAdded?: (folder: FolderConfig, filePath: string) => void | Promise<void>;
+  onFileAdded?: (
+    folder: FolderConfig,
+    filePath: string
+  ) => void | Promise<void>;
 }
 
 interface FolderWatcher {
@@ -25,11 +28,13 @@ export function startFolderWatchers(
   folders: FolderConfig[],
   options: WatchOptions
 ): WatchSession {
-  const watchers = folders.map((folder) => createFolderWatcher(folder, options));
-  const ready = Promise.all(watchers.map((entry) => entry.ready)).then(() => undefined);
+  const watchers = folders.map(folder => createFolderWatcher(folder, options));
+  const ready = Promise.all(watchers.map(entry => entry.ready)).then(
+    () => undefined
+  );
   const close = async () => {
     await Promise.all(
-      watchers.map(async (entry) => {
+      watchers.map(async entry => {
         await entry.watcher.close();
       })
     );
@@ -38,7 +43,10 @@ export function startFolderWatchers(
   return { ready, close };
 }
 
-function createFolderWatcher(folder: FolderConfig, options: WatchOptions): FolderWatcher {
+function createFolderWatcher(
+  folder: FolderConfig,
+  options: WatchOptions
+): FolderWatcher {
   const folderLogger = options.logger.child({ folder: folder.path });
   const watcher = chokidar.watch(folder.path, {
     persistent: true,
@@ -52,24 +60,33 @@ function createFolderWatcher(folder: FolderConfig, options: WatchOptions): Folde
     interval: folder.pollIntervalMs,
   });
 
-  watcher.on('add', (filePath) => {
+  watcher.on('add', filePath => {
     const displayPath = formatDisplayPath(folder.path, filePath);
-    folderLogger.info({ event: 'file_added', file: displayPath }, 'Detected new file');
+    folderLogger.info(
+      { event: 'file_added', file: displayPath },
+      'Detected new file'
+    );
     if (options.onFileAdded) {
-      Promise.resolve(options.onFileAdded(folder, filePath)).catch((error) =>
-        folderLogger.error({ err: (error as Error).message }, 'Error handling file event.')
+      Promise.resolve(options.onFileAdded(folder, filePath)).catch(error =>
+        folderLogger.error(
+          { err: (error as Error).message },
+          'Error handling file event.'
+        )
       );
     }
   });
 
-  watcher.on('error', (error) => {
+  watcher.on('error', error => {
     folderLogger.error({ err: error }, 'Watcher error');
   });
 
-  const ready = new Promise<void>((resolve) => {
+  const ready = new Promise<void>(resolve => {
     watcher.once('ready', () => {
       if (options.verbose) {
-        folderLogger.info({ event: 'watch_ready' }, 'Watcher ready (ignoring initial files).');
+        folderLogger.info(
+          { event: 'watch_ready' },
+          'Watcher ready (ignoring initial files).'
+        );
       }
       resolve();
     });

@@ -2,7 +2,14 @@ import pino from 'pino';
 
 type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
-const validLevels: LogLevel[] = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'];
+const validLevels: LogLevel[] = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+];
 
 function resolveLogLevel(value?: string): LogLevel {
   if (!value) {
@@ -73,4 +80,4 @@ if (isTTY && !useJsonOutput) {
 // Using type assertion to work around this - pino is callable at runtime
 const baseLogger = (pino as any)(pinoConfig);
 
-export const logger = baseLogger as unknown as Logger;
+export const logger = (baseLogger as unknown) as Logger;
