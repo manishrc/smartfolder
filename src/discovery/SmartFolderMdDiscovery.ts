@@ -1,6 +1,7 @@
 import { readdir, readFile, lstat } from 'fs/promises';
 import path from 'path';
 import chokidar, { FSWatcher } from 'chokidar';
+import { minimatch } from 'minimatch';
 import { logger } from '../logger';
 
 /**
@@ -256,14 +257,9 @@ export class SmartFolderMdDiscovery {
     const relativePath = path.relative(rootPath, filePath);
 
     for (const pattern of this.ignorePatterns) {
-      // Simple glob-like matching (supports ** and *)
-      const regexPattern = pattern
-        .replace(/\*\*/g, '.*')
-        .replace(/\*/g, '[^/]*')
-        .replace(/\//g, '\\/');
-
-      const regex = new RegExp(`^${regexPattern}$`);
-      if (regex.test(relativePath)) {
+      // Use minimatch for proper glob pattern matching
+      // This supports **, *, {a,b}, [abc], and other glob features
+      if (minimatch(relativePath, pattern, { dot: true })) {
         return true;
       }
     }

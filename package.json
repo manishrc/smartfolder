@@ -41,24 +41,56 @@
 		{
 			"path": "dist/smartfolder.cjs.production.min.js",
 			"limit": "500 KB",
-			"ignore": ["fs", "path", "os", "crypto", "stream", "util", "assert", "tty", "worker_threads", "pdf-parse", "node:fs/promises", "node:stream", "node:path", "readdirp"]
+			"ignore": [
+				"fs",
+				"path",
+				"os",
+				"crypto",
+				"stream",
+				"util",
+				"assert",
+				"tty",
+				"worker_threads",
+				"pdf-parse",
+				"node:fs/promises",
+				"node:stream",
+				"node:path",
+				"readdirp"
+			]
 		},
 		{
 			"path": "dist/smartfolder.esm.js",
 			"limit": "500 KB",
-			"ignore": ["fs", "path", "os", "crypto", "stream", "util", "assert", "tty", "worker_threads", "pdf-parse", "node:fs/promises", "node:stream", "node:path", "readdirp"]
+			"ignore": [
+				"fs",
+				"path",
+				"os",
+				"crypto",
+				"stream",
+				"util",
+				"assert",
+				"tty",
+				"worker_threads",
+				"pdf-parse",
+				"node:fs/promises",
+				"node:stream",
+				"node:path",
+				"readdirp"
+			]
 		}
 	],
 	"dependencies": {
 		"@ai-sdk/openai": "^2.0.67",
 		"@ai-sdk/vercel": "beta",
 		"ai": "beta",
+		"minimatch": "^10.1.1",
 		"pino": "^10.1.0",
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@size-limit/preset-small-lib": "^11.2.0",
 		"@types/fluent-ffmpeg": "^2.1.28",
+		"@types/minimatch": "^5.1.2",
 		"@types/pdf-parse": "^1.1.5",
 		"husky": "^9.1.7",
 		"pino-pretty": "^11.2.0",
