@@ -37,56 +37,6 @@
 	"name": "smartfolder",
 	"author": "Manish Chiniwalar",
 	"module": "dist/smartfolder.esm.js",
-	"size-limit": [
-		{
-			"path": "dist/smartfolder.cjs.production.min.js",
-			"limit": "500 KB",
-			"ignore": [
-				"fs",
-				"fs/promises",
-				"path",
-				"os",
-				"crypto",
-				"stream",
-				"util",
-				"assert",
-				"tty",
-				"worker_threads",
-				"pdf-parse",
-				"chokidar",
-				"minimatch",
-				"node:fs",
-				"node:fs/promises",
-				"node:stream",
-				"node:path",
-				"readdirp"
-			]
-		},
-		{
-			"path": "dist/smartfolder.esm.js",
-			"limit": "500 KB",
-			"ignore": [
-				"fs",
-				"fs/promises",
-				"path",
-				"os",
-				"crypto",
-				"stream",
-				"util",
-				"assert",
-				"tty",
-				"worker_threads",
-				"pdf-parse",
-				"chokidar",
-				"minimatch",
-				"node:fs",
-				"node:fs/promises",
-				"node:stream",
-				"node:path",
-				"readdirp"
-			]
-		}
-	],
 	"dependencies": {
 		"@ai-sdk/openai": "^2.0.67",
 		"@ai-sdk/vercel": "beta",
