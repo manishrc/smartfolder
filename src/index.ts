@@ -75,8 +75,13 @@ export async function runCli(argv: string[] = process.argv): Promise<void> {
   if (parsed.kind === 'run') {
     await handleRunCommand(parsed.options);
   } else if (parsed.kind === 'validate') {
-    const configPath = await resolveConfigPath('validate', parsed.options.config);
-    const config = await loadConfig(configPath, { dryRun: Boolean(parsed.options.dryRun) });
+    const configPath = await resolveConfigPath(
+      'validate',
+      parsed.options.config
+    );
+    const config = await loadConfig(configPath, {
+      dryRun: Boolean(parsed.options.dryRun),
+    });
     printConfigSummary(config);
     logger.info('Configuration looks good.');
   } else {
@@ -97,7 +102,9 @@ function parseArgs(args: string[]): ParsedArgs {
     return { kind: 'validate', options: parseValidateOptions(rest) };
   }
   if (first.startsWith('-')) {
-    throw new SmartfolderCliError('Provide a folder path before specifying options.');
+    throw new SmartfolderCliError(
+      'Provide a folder path before specifying options.'
+    );
   }
   return { kind: 'inline', options: parseInlineOptions(first, rest) };
 }
@@ -113,7 +120,12 @@ function parseRunOptions(tokens: string[]): RunCommandOptions {
     switch (flag) {
       case '--config':
       case '-c': {
-        const { value, nextIndex } = consumeOptionValue(flag, inlineValue, tokens, i);
+        const { value, nextIndex } = consumeOptionValue(
+          flag,
+          inlineValue,
+          tokens,
+          i
+        );
         options.config = value;
         i = nextIndex;
         break;
@@ -145,7 +157,12 @@ function parseValidateOptions(tokens: string[]): ValidateCommandOptions {
     switch (flag) {
       case '--config':
       case '-c': {
-        const { value, nextIndex } = consumeOptionValue(flag, inlineValue, tokens, i);
+        const { value, nextIndex } = consumeOptionValue(
+          flag,
+          inlineValue,
+          tokens,
+          i
+        );
         options.config = value;
         i = nextIndex;
         break;
@@ -160,7 +177,10 @@ function parseValidateOptions(tokens: string[]): ValidateCommandOptions {
   return options;
 }
 
-function parseInlineOptions(firstArg: string, tokens: string[]): InlineCommandOptions {
+function parseInlineOptions(
+  firstArg: string,
+  tokens: string[]
+): InlineCommandOptions {
   const options: InlineCommandOptions = { path: firstArg };
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
@@ -171,7 +191,12 @@ function parseInlineOptions(firstArg: string, tokens: string[]): InlineCommandOp
     switch (flag) {
       case '--prompt':
       case '-p': {
-        const { value, nextIndex } = consumeOptionValue(flag, inlineValue, tokens, i);
+        const { value, nextIndex } = consumeOptionValue(
+          flag,
+          inlineValue,
+          tokens,
+          i
+        );
         options.prompt = value;
         i = nextIndex;
         break;
@@ -196,7 +221,10 @@ function splitFlagToken(token: string): { flag: string; inlineValue?: string } {
   if (token.startsWith('--')) {
     const eqIndex = token.indexOf('=');
     if (eqIndex !== -1) {
-      return { flag: token.slice(0, eqIndex), inlineValue: token.slice(eqIndex + 1) };
+      return {
+        flag: token.slice(0, eqIndex),
+        inlineValue: token.slice(eqIndex + 1),
+      };
     }
   }
   return { flag: token };
@@ -232,7 +260,9 @@ async function handleInlineRun(options: InlineCommandOptions): Promise<void> {
     throw new SmartfolderCliError('Provide a folder path to watch.');
   }
   if (!options.prompt) {
-    throw new SmartfolderCliError('Provide --prompt "..." when using the inline shortcut.');
+    throw new SmartfolderCliError(
+      'Provide --prompt "..." when using the inline shortcut.'
+    );
   }
 
   const globalAi = await loadGlobalAiDefaults();
@@ -240,8 +270,10 @@ async function handleInlineRun(options: InlineCommandOptions): Promise<void> {
     provider: (globalAi?.provider as string) ?? 'vercel',
     model: (globalAi?.model as string) ?? 'openai/gpt-4o-mini',
     apiKey: (globalAi?.apiKey as string) ?? process.env.AI_GATEWAY_API_KEY,
-    temperature: typeof globalAi?.temperature === 'number' ? globalAi?.temperature : 0.2,
-    maxToolCalls: typeof globalAi?.maxToolCalls === 'number' ? globalAi?.maxToolCalls : 8,
+    temperature:
+      typeof globalAi?.temperature === 'number' ? globalAi?.temperature : 0.2,
+    maxToolCalls:
+      typeof globalAi?.maxToolCalls === 'number' ? globalAi?.maxToolCalls : 8,
     defaultTools: Array.isArray(globalAi?.defaultTools)
       ? (globalAi?.defaultTools as ToolId[])
       : [...SUPPORTED_TOOL_IDS],
@@ -281,13 +313,17 @@ async function startRunSession(
 
   const aiApiKey = resolveAiApiKey(config);
   if (!aiApiKey) {
-    logger.warn('No AI API key detected. Set AI_GATEWAY_API_KEY or ai.apiKey before running workflows.');
+    logger.warn(
+      'No AI API key detected. Set AI_GATEWAY_API_KEY or ai.apiKey before running workflows.'
+    );
   } else {
     logger.info({ apiKey: maskSecret(aiApiKey) }, 'AI API key detected.');
   }
 
   if (flags.runOnce) {
-    logger.info('`--run-once` requested. The watcher will exit after the first scan when implemented.');
+    logger.info(
+      '`--run-once` requested. The watcher will exit after the first scan when implemented.'
+    );
   }
 
   if (flags.verbose) {
@@ -315,10 +351,14 @@ async function startRunSession(
   const watchSession = startFolderWatchers(config.folders, {
     verbose: flags.verbose,
     logger: watchLogger,
-    onFileAdded: (folder, filePath) => orchestrator.enqueueFile(folder, filePath, flags.dryRun),
+    onFileAdded: (folder, filePath) =>
+      orchestrator.enqueueFile(folder, filePath, flags.dryRun),
   });
   await watchSession.ready;
-  logger.info({ folders: config.folders.length }, 'Watching folders for new files.');
+  logger.info(
+    { folders: config.folders.length },
+    'Watching folders for new files.'
+  );
 
   if (flags.runOnce) {
     await watchSession.close();
@@ -377,15 +417,12 @@ function maskSecret(secret: string): string {
 }
 
 function resolveAiApiKey(config: SmartfolderConfig): string | undefined {
-  return (
-    config.ai.apiKey ||
-    process.env.AI_GATEWAY_API_KEY
-  );
+  return config.ai.apiKey || process.env.AI_GATEWAY_API_KEY;
 }
 
 async function ensureStateDirectories(folders: FolderConfig[]): Promise<void> {
   await Promise.all(
-    folders.map(async (folder) => {
+    folders.map(async folder => {
       try {
         // Create state directory in ~/.smartfolder/state/{folder-hash}/
         await fs.mkdir(folder.stateDir, { recursive: true });
@@ -402,7 +439,7 @@ async function ensureStateDirectories(folders: FolderConfig[]): Promise<void> {
 }
 
 async function holdProcessOpen(watchSession: WatchSession): Promise<void> {
-  await new Promise<void>((resolve) => {
+  await new Promise<void>(resolve => {
     const handleSignal = async (signal: NodeJS.Signals) => {
       logger.info({ signal }, 'Received shutdown signal.');
       cleanup();
@@ -418,7 +455,10 @@ async function holdProcessOpen(watchSession: WatchSession): Promise<void> {
   });
 }
 
-async function resolveConfigPath(commandName: string, provided?: string): Promise<string> {
+async function resolveConfigPath(
+  commandName: string,
+  provided?: string
+): Promise<string> {
   if (provided) {
     return provided;
   }
@@ -458,7 +498,12 @@ async function loadGlobalAiDefaults(): Promise<AiConfigInput | undefined> {
   try {
     const raw = await fs.readFile(globalPath, 'utf8');
     const parsed = JSON.parse(raw) as SmartfolderConfigInput;
-    if (parsed && typeof parsed === 'object' && parsed.ai && typeof parsed.ai === 'object') {
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      parsed.ai &&
+      typeof parsed.ai === 'object'
+    ) {
       return parsed.ai as AiConfigInput;
     }
   } catch (error) {
@@ -475,7 +520,9 @@ function printHelp(): void {
   console.log('Usage: smartfolder <command> [options]\n');
   console.log('Commands:');
   console.log('  run        Start watchers and invoke workflows (stub).');
-  console.log('  validate   Validate the config file without starting watchers.\n');
+  console.log(
+    '  validate   Validate the config file without starting watchers.\n'
+  );
   console.log('Options:');
   console.log('  -c, --config <path>   Path to smartfolder config (JSON).');
   console.log('      --dry-run         Simulate tool side effects.');
@@ -484,8 +531,18 @@ function printHelp(): void {
   console.log('  -h, --help            Show this help message.');
   console.log('  -v, --version         Show CLI version.');
   console.log('\nShortcuts:');
-  console.log('  smartfolder ./path --prompt "..." [--dry-run] [--run-once] [--verbose]');
-  console.log('    Uses inline config plus ~/.smartfolder/config.json defaults if present.');
+  console.log(
+    '  smartfolder ./path --prompt "..." [--dry-run] [--run-once] [--verbose]'
+  );
+  console.log(
+    '    Uses inline config plus ~/.smartfolder/config.json defaults if present.'
+  );
 }
 
-export { loadConfig, FolderConfig, SmartfolderConfig, ToolId, SUPPORTED_TOOL_IDS };
+export {
+  loadConfig,
+  FolderConfig,
+  SmartfolderConfig,
+  ToolId,
+  SUPPORTED_TOOL_IDS,
+};

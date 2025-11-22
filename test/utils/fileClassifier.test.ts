@@ -24,13 +24,15 @@ describe('File Classifier', () => {
           'iphone.heic',
           'camera.heif',
         ];
-        imageExts.forEach((file) => {
+        imageExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.IMAGE);
         });
       });
 
       it('should classify images by MIME type', () => {
-        expect(classifyFile('unknown.xyz', 'image/png')).toBe(FileCategory.IMAGE);
+        expect(classifyFile('unknown.xyz', 'image/png')).toBe(
+          FileCategory.IMAGE
+        );
       });
     });
 
@@ -58,13 +60,15 @@ describe('File Classifier', () => {
           'old.flv',
           'windows.wmv',
         ];
-        videoExts.forEach((file) => {
+        videoExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.VIDEO);
         });
       });
 
       it('should classify videos by MIME type', () => {
-        expect(classifyFile('unknown.xyz', 'video/mp4')).toBe(FileCategory.VIDEO);
+        expect(classifyFile('unknown.xyz', 'video/mp4')).toBe(
+          FileCategory.VIDEO
+        );
       });
     });
 
@@ -79,7 +83,7 @@ describe('File Classifier', () => {
           'compressed.aac',
           'windows.wma',
         ];
-        audioExts.forEach((file) => {
+        audioExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.AUDIO);
         });
       });
@@ -101,14 +105,14 @@ describe('File Classifier', () => {
           'slides.ppt',
           'slides.pptx',
         ];
-        officeExts.forEach((file) => {
+        officeExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.OFFICE_DOC);
         });
       });
 
       it('should classify LibreOffice documents', () => {
         const libreOfficeExts = ['text.odt', 'calc.ods', 'present.odp'];
-        libreOfficeExts.forEach((file) => {
+        libreOfficeExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.OFFICE_DOC);
         });
       });
@@ -125,7 +129,7 @@ describe('File Classifier', () => {
           'tarball.tgz',
           'bzip.bz2',
         ];
-        archiveExts.forEach((file) => {
+        archiveExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.ARCHIVE);
         });
       });
@@ -134,7 +138,7 @@ describe('File Classifier', () => {
     describe('Code Files', () => {
       it('should classify JavaScript/TypeScript files', () => {
         const jsExts = ['app.js', 'types.ts', 'component.jsx', 'widget.tsx'];
-        jsExts.forEach((file) => {
+        jsExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.CODE_FILE);
         });
       });
@@ -154,14 +158,14 @@ describe('File Classifier', () => {
           'android.kt',
           'functional.scala',
         ];
-        codeExts.forEach((file) => {
+        codeExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.CODE_FILE);
         });
       });
 
       it('should classify shell scripts', () => {
         const shellExts = ['script.sh', 'bash.bash', 'zsh.zsh'];
-        shellExts.forEach((file) => {
+        shellExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.CODE_FILE);
         });
       });
@@ -177,7 +181,7 @@ describe('File Classifier', () => {
           'cargo.toml',
           'sheet.csv',
         ];
-        dataExts.forEach((file) => {
+        dataExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.STRUCTURED_DATA);
         });
       });
@@ -197,7 +201,7 @@ describe('File Classifier', () => {
           'style.sass',
           'style.less',
         ];
-        textExts.forEach((file) => {
+        textExts.forEach(file => {
           expect(classifyFile(file)).toBe(FileCategory.TEXT_DOCUMENT);
         });
       });

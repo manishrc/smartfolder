@@ -43,7 +43,9 @@ describe('FileToolRegistry', () => {
       { folder, logger, dryRun: true }
     );
     expect(result.success).toBe(true);
-    await expect(fs.stat(path.join(folder.path, 'dry-run.txt'))).rejects.toThrow();
+    await expect(
+      fs.stat(path.join(folder.path, 'dry-run.txt'))
+    ).rejects.toThrow();
   });
 
   it('creates files with write_file and refuses overwrite', async () => {

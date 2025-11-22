@@ -24,10 +24,13 @@ export class VideoExtractor {
       }
 
       // Get video metadata using ffprobe
-      return new Promise<VideoMetadata | undefined>((resolve) => {
+      return new Promise<VideoMetadata | undefined>(resolve => {
         ffmpeg.default(filePath).ffprobe((err: any, data: any) => {
           if (err) {
-            console.warn(`Video metadata extraction failed for ${filePath}:`, err);
+            console.warn(
+              `Video metadata extraction failed for ${filePath}:`,
+              err
+            );
             resolve(undefined);
             return;
           }
@@ -45,13 +48,13 @@ export class VideoExtractor {
               videoMetadata.codec = videoStream.codec_name;
             if (videoStream.r_frame_rate) {
               // Parse frame rate (e.g., "30000/1001")
-              const [num, den] = videoStream.r_frame_rate.split('/').map(Number);
+              const [num, den] = videoStream.r_frame_rate
+                .split('/')
+                .map(Number);
               videoMetadata.frameRate = den ? num / den : num;
             }
             if (videoStream.bit_rate)
-              videoMetadata.bitrate = Math.round(
-                videoStream.bit_rate / 1000
-              ); // Convert to kbps
+              videoMetadata.bitrate = Math.round(videoStream.bit_rate / 1000); // Convert to kbps
           }
 
           // Find audio stream

@@ -83,7 +83,10 @@ export class ArchiveExtractor {
         throw error;
       }
     } catch (error) {
-      console.warn(`Archive metadata extraction failed for ${filePath}:`, error);
+      console.warn(
+        `Archive metadata extraction failed for ${filePath}:`,
+        error
+      );
       return { type };
     }
   }

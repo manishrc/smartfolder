@@ -113,7 +113,11 @@ describe('TextContentProvider', () => {
       // Each line is ~100 bytes, need >102 lines to exceed 10KB
       const lines = Array(500)
         .fill(null)
-        .map((_, i) => `Line ${i + 1} with some padding content to make it larger than a few bytes per line`);
+        .map(
+          (_, i) =>
+            `Line ${i +
+              1} with some padding content to make it larger than a few bytes per line`
+        );
       await fs.writeFile(filePath, lines.join('\n'));
 
       const result = await provider.provideContent(filePath);

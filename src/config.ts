@@ -2,9 +2,19 @@ import fs from 'fs/promises';
 import path from 'path';
 import { getStateDirForFolder, getHistoryLogPath } from './utils/stateDir';
 
-export const SUPPORTED_TOOL_IDS = ['read_file', 'write_file', 'rename_file', 'move_file', 'grep', 'sed', 'head', 'tail', 'create_folder'] as const;
+export const SUPPORTED_TOOL_IDS = [
+  'read_file',
+  'write_file',
+  'rename_file',
+  'move_file',
+  'grep',
+  'sed',
+  'head',
+  'tail',
+  'create_folder',
+] as const;
 
-export type ToolId = (typeof SUPPORTED_TOOL_IDS)[number];
+export type ToolId = typeof SUPPORTED_TOOL_IDS[number];
 
 const envVariablePattern = /^\$\{?([A-Z0-9_]+)\}?$/i;
 const DEFAULT_DEBOUNCE_MS = 1500;
@@ -91,9 +101,11 @@ export async function loadConfig(
 
 export function loadInlineConfig(
   config: SmartfolderConfigInput,
-  options: (LoadConfigOptions & { sourcePath?: string }) = {}
+  options: LoadConfigOptions & { sourcePath?: string } = {}
 ): SmartfolderConfig {
-  const sourcePath = options.sourcePath ?? path.join(process.cwd(), 'smartfolder.inline.config.json');
+  const sourcePath =
+    options.sourcePath ??
+    path.join(process.cwd(), 'smartfolder.inline.config.json');
   return normalizeConfig(config, sourcePath, options);
 }
 
@@ -108,7 +120,10 @@ function parseConfigFile(contents: string, filename: string): unknown {
   try {
     return JSON.parse(contents);
   } catch (error) {
-    throw new SmartfolderConfigError(`Unable to parse config file ${filename} as JSON.`, error);
+    throw new SmartfolderConfigError(
+      `Unable to parse config file ${filename} as JSON.`,
+      error
+    );
   }
 }
 
@@ -154,11 +169,18 @@ function normalizeAiConfig(rawAi: unknown): SmartfolderConfig['ai'] {
 
   const provider = ai.provider ?? 'vercel';
   if (provider !== 'vercel') {
-    throw new SmartfolderConfigError('Only the `vercel` AI provider is supported right now.');
+    throw new SmartfolderConfigError(
+      'Only the `vercel` AI provider is supported right now.'
+    );
   }
 
-  const model = ai.model === undefined ? DEFAULT_MODEL : expectString(ai.model, 'ai.model');
-  const apiKey = resolveEnvValue(expectOptionalString(ai.apiKey, 'ai.apiKey'), 'ai.apiKey', true);
+  const model =
+    ai.model === undefined ? DEFAULT_MODEL : expectString(ai.model, 'ai.model');
+  const apiKey = resolveEnvValue(
+    expectOptionalString(ai.apiKey, 'ai.apiKey'),
+    'ai.apiKey',
+    true
+  );
 
   const temperature =
     ai.temperature === undefined
@@ -196,7 +218,10 @@ function normalizeFolderConfig(
   const folder = rawFolder as Record<string, unknown>;
   const label = (field: string) => `folders[${index}].${field}`;
 
-  const folderPath = resolvePath(expectString(folder.path, label('path')), ctx.sourceDir);
+  const folderPath = resolvePath(
+    expectString(folder.path, label('path')),
+    ctx.sourceDir
+  );
   const prompt = expectString(folder.prompt, label('prompt'));
   // Use centralized state directory in ~/.smartfolder/state/{folder-hash}/
   const stateDir = getStateDirForFolder(folderPath);
@@ -208,7 +233,9 @@ function normalizeFolderConfig(
 
   const ignore = dedupeStrings([
     ...INTERNAL_IGNORE_PATTERNS,
-    ...(folder.ignore ? validateStringArray(folder.ignore, label('ignore')) : []),
+    ...(folder.ignore
+      ? validateStringArray(folder.ignore, label('ignore'))
+      : []),
   ]);
   const env = folder.env ? validateEnvRecord(folder.env, label('env')) : {};
 
@@ -222,7 +249,10 @@ function normalizeFolderConfig(
       ? undefined
       : expectPositiveInteger(folder.pollIntervalMs, label('pollIntervalMs'));
 
-  const dryRunFlag = ctx.dryRunOverride ?? expectOptionalBoolean(folder.dryRun, label('dryRun')) ?? false;
+  const dryRunFlag =
+    ctx.dryRunOverride ??
+    expectOptionalBoolean(folder.dryRun, label('dryRun')) ??
+    false;
 
   return {
     path: folderPath,
@@ -260,12 +290,19 @@ function validateStringArray(value: unknown, label: string): string[] {
   if (!Array.isArray(value)) {
     throw new SmartfolderConfigError(`${label} must be an array of strings.`);
   }
-  return value.map((entry, index) => expectString(entry, `${label}[${index}]`, { allowEmpty: false }));
+  return value.map((entry, index) =>
+    expectString(entry, `${label}[${index}]`, { allowEmpty: false })
+  );
 }
 
-function validateEnvRecord(value: unknown, label: string): Record<string, string> {
+function validateEnvRecord(
+  value: unknown,
+  label: string
+): Record<string, string> {
   if (!isPlainObject(value)) {
-    throw new SmartfolderConfigError(`${label} must be an object containing string values.`);
+    throw new SmartfolderConfigError(
+      `${label} must be an object containing string values.`
+    );
   }
 
   const env: Record<string, string> = {};
@@ -291,14 +328,20 @@ function expectString(
   return value;
 }
 
-function expectOptionalString(value: unknown, label: string): string | undefined {
+function expectOptionalString(
+  value: unknown,
+  label: string
+): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
   return expectString(value, label);
 }
 
-function expectOptionalBoolean(value: unknown, label: string): boolean | undefined {
+function expectOptionalBoolean(
+  value: unknown,
+  label: string
+): boolean | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
@@ -318,7 +361,9 @@ function expectNumberInRange(
     throw new SmartfolderConfigError(`${label} must be a number.`);
   }
   if (value < min || value > max) {
-    throw new SmartfolderConfigError(`${label} must be between ${min} and ${max}.`);
+    throw new SmartfolderConfigError(
+      `${label} must be between ${min} and ${max}.`
+    );
   }
   return value;
 }
@@ -332,7 +377,9 @@ function expectPositiveInteger(value: unknown, label: string): number {
 
 function expectNonNegativeInteger(value: unknown, label: string): number {
   if (!Number.isInteger(value) || (value as number) < 0) {
-    throw new SmartfolderConfigError(`${label} must be a non-negative integer.`);
+    throw new SmartfolderConfigError(
+      `${label} must be a non-negative integer.`
+    );
   }
   return value as number;
 }

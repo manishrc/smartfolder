@@ -41,7 +41,8 @@ export class PDFExtractor {
         if (data.info.Subject) metadata.Subject = data.info.Subject;
         if (data.info.Creator) metadata.Creator = data.info.Creator;
         if (data.info.Producer) metadata.Producer = data.info.Producer;
-        if (data.info.CreationDate) metadata.CreationDate = data.info.CreationDate;
+        if (data.info.CreationDate)
+          metadata.CreationDate = data.info.CreationDate;
         if (data.info.ModDate) metadata.ModDate = data.info.ModDate;
       }
 

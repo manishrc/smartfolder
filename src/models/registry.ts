@@ -73,10 +73,6 @@ export const MODEL_REGISTRY: Record<string, ModelCapability> = {
       ModelStrength.FAST_INFERENCE,
       ModelStrength.LARGE_CONTEXT,
     ],
-    bestFor: [
-      FileCategory.VIDEO,
-      FileCategory.AUDIO,
-      FileCategory.IMAGE,
-    ],
+    bestFor: [FileCategory.VIDEO, FileCategory.AUDIO, FileCategory.IMAGE],
   },
 };

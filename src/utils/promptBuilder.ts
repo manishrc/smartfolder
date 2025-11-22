@@ -26,7 +26,8 @@ export function buildPromptFromFileContent(fileContent: FileContent): string {
     const exif = fileContent.metadata.exif;
 
     if (exif.Make || exif.Model) {
-      prompt += `- Camera: ${exif.Make || ''} ${exif.Model || ''}`.trim() + '\n';
+      prompt +=
+        `- Camera: ${exif.Make || ''} ${exif.Model || ''}`.trim() + '\n';
     }
     if (exif.DateTimeOriginal || exif.DateTime) {
       prompt += `- Date Taken: ${exif.DateTimeOriginal || exif.DateTime}\n`;
@@ -80,7 +81,9 @@ export function buildPromptFromFileContent(fileContent: FileContent): string {
     if (audio.year) prompt += `- Year: ${audio.year}\n`;
     if (audio.genre) prompt += `- Genre: ${audio.genre.join(', ')}\n`;
     if (audio.duration)
-      prompt += `- Duration: ${Math.floor(audio.duration / 60)}:${String(Math.floor(audio.duration % 60)).padStart(2, '0')}\n`;
+      prompt += `- Duration: ${Math.floor(audio.duration / 60)}:${String(
+        Math.floor(audio.duration % 60)
+      ).padStart(2, '0')}\n`;
     if (audio.bitrate) prompt += `- Bitrate: ${audio.bitrate} kbps\n`;
     if (audio.sampleRate) prompt += `- Sample Rate: ${audio.sampleRate} Hz\n`;
     if (audio.codec) prompt += `- Codec: ${audio.codec}\n`;
@@ -102,7 +105,8 @@ export function buildPromptFromFileContent(fileContent: FileContent): string {
     }
     if (video.codec) prompt += `- Video Codec: ${video.codec}\n`;
     if (video.audioCodec) prompt += `- Audio Codec: ${video.audioCodec}\n`;
-    if (video.frameRate) prompt += `- Frame Rate: ${video.frameRate.toFixed(2)} fps\n`;
+    if (video.frameRate)
+      prompt += `- Frame Rate: ${video.frameRate.toFixed(2)} fps\n`;
     if (video.bitrate) prompt += `- Bitrate: ${video.bitrate} kbps\n`;
     if (video.hasAudio !== undefined)
       prompt += `- Has Audio: ${video.hasAudio ? 'Yes' : 'No'}\n`;
@@ -124,7 +128,7 @@ export function buildPromptFromFileContent(fileContent: FileContent): string {
 
     if (archive.files && archive.files.length > 0) {
       prompt += '\n### Files in Archive (first 20):\n';
-      archive.files.slice(0, 20).forEach((file) => {
+      archive.files.slice(0, 20).forEach(file => {
         prompt += `- ${file.name} (${(file.size / 1024).toFixed(2)} KB)\n`;
       });
       if (archive.files.length > 20) {
@@ -178,7 +182,7 @@ export function buildPromptFromFileContent(fileContent: FileContent): string {
 
   // Available tools
   prompt += '\n## Available Tools\n';
-  fileContent.availableTools.forEach((tool) => {
+  fileContent.availableTools.forEach(tool => {
     prompt += `- ${tool}\n`;
   });
 

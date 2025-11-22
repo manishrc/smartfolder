@@ -29,7 +29,10 @@ export function getSmartFolderHome(): string {
 export function hashFolderPath(folderPath: string): string {
   // Normalize path to ensure consistent hashing across platforms
   const normalizedPath = path.normalize(path.resolve(folderPath));
-  const hash = crypto.createHash('sha256').update(normalizedPath).digest('hex');
+  const hash = crypto
+    .createHash('sha256')
+    .update(normalizedPath)
+    .digest('hex');
   // Use first 16 characters for shorter directory names
   return hash.substring(0, 16);
 }

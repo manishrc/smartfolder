@@ -17,7 +17,9 @@ describe('stateDir utilities', () => {
 
   beforeEach(async () => {
     // Create temporary directory for tests
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'smartfolder-stateDir-test-'));
+    tempDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'smartfolder-stateDir-test-')
+    );
   });
 
   afterEach(async () => {
@@ -40,7 +42,9 @@ describe('stateDir utilities', () => {
 
     it('should return ~/.smartfolder if SMARTFOLDER_HOME not set', () => {
       delete process.env.SMARTFOLDER_HOME;
-      expect(getSmartFolderHome()).toBe(path.join(os.homedir(), '.smartfolder'));
+      expect(getSmartFolderHome()).toBe(
+        path.join(os.homedir(), '.smartfolder')
+      );
     });
   });
 
@@ -149,7 +153,7 @@ describe('stateDir utilities', () => {
       const firstMetadata: FolderStateMetadata = JSON.parse(firstContent);
 
       // Wait a bit to ensure different timestamps
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // Second run
       await ensureFolderMetadata(folderPath, 'Updated prompt');

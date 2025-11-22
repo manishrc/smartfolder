@@ -55,7 +55,12 @@ export class FolderExtractor {
 
           // Only recurse if we haven't reached max depth
           if (currentDepth < maxDepth) {
-            await this.analyzeFolder(entryPath, metadata, currentDepth + 1, maxDepth);
+            await this.analyzeFolder(
+              entryPath,
+              metadata,
+              currentDepth + 1,
+              maxDepth
+            );
           }
         } else if (entry.isFile()) {
           metadata.fileCount++;
@@ -65,7 +70,8 @@ export class FolderExtractor {
           metadata.totalSize += stats.size;
 
           // Track file types
-          const ext = path.extname(entry.name).toLowerCase() || '(no extension)';
+          const ext =
+            path.extname(entry.name).toLowerCase() || '(no extension)';
           metadata.types[ext] = (metadata.types[ext] || 0) + 1;
         }
       }

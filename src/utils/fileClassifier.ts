@@ -39,15 +39,7 @@ export function classifyFile(
   }
 
   // Audio
-  const audioExts = [
-    '.mp3',
-    '.wav',
-    '.ogg',
-    '.m4a',
-    '.flac',
-    '.aac',
-    '.wma',
-  ];
+  const audioExts = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac', '.wma'];
   if (audioExts.includes(ext) || mimeType?.startsWith('audio/')) {
     return FileCategory.AUDIO;
   }

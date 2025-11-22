@@ -27,7 +27,7 @@ export function selectModelForFile(
   }
 
   // Auto-select based on file type and capabilities
-  const candidates = Object.values(MODEL_REGISTRY).filter((model) =>
+  const candidates = Object.values(MODEL_REGISTRY).filter(model =>
     model.bestFor.includes(fileCategory)
   );
 
@@ -37,7 +37,7 @@ export function selectModelForFile(
   }
 
   // Score models based on capabilities and cost
-  const scored = candidates.map((model) => {
+  const scored = candidates.map(model => {
     let score = 0;
 
     // Prefer native support for specialized file types

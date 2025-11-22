@@ -26,7 +26,9 @@ describe('Model Selector', () => {
       const model = selectModelForFile(FileCategory.IMAGE, 3_000_000);
       expect(model.supportsImages).toBe(true);
       // Any model that supports images is acceptable
-      expect(['gpt-4o-mini', 'gpt-4.1-nano', 'gemini-2.0-flash-exp']).toContain(model.modelId);
+      expect(['gpt-4o-mini', 'gpt-4.1-nano', 'gemini-2.0-flash-exp']).toContain(
+        model.modelId
+      );
     });
 
     it('should prefer GPT-4.1-nano for large text files', () => {
@@ -94,17 +96,19 @@ describe('Model Selector', () => {
     });
 
     it('should handle all registered models', () => {
-      Object.values(MODEL_REGISTRY).forEach((capability) => {
+      Object.values(MODEL_REGISTRY).forEach(capability => {
         const modelString = getModelString(capability);
         expect(modelString).toMatch(/^[a-z]+\/[a-z0-9.-]+$/);
-        expect(modelString).toBe(`${capability.provider}/${capability.modelId}`);
+        expect(modelString).toBe(
+          `${capability.provider}/${capability.modelId}`
+        );
       });
     });
   });
 
   describe('Model Registry Validation', () => {
     it('should have valid cost values for all models', () => {
-      Object.values(MODEL_REGISTRY).forEach((model) => {
+      Object.values(MODEL_REGISTRY).forEach(model => {
         expect(model.costPerMillionInputTokens).toBeGreaterThan(0);
         expect(model.costPerMillionOutputTokens).toBeGreaterThan(0);
         expect(model.costPerMillionOutputTokens).toBeGreaterThanOrEqual(
@@ -114,26 +118,26 @@ describe('Model Selector', () => {
     });
 
     it('should have valid token limits for all models', () => {
-      Object.values(MODEL_REGISTRY).forEach((model) => {
+      Object.values(MODEL_REGISTRY).forEach(model => {
         expect(model.maxInputTokens).toBeGreaterThan(0);
         expect(model.maxOutputTokens).toBeGreaterThan(0);
       });
     });
 
     it('should have at least one strength for each model', () => {
-      Object.values(MODEL_REGISTRY).forEach((model) => {
+      Object.values(MODEL_REGISTRY).forEach(model => {
         expect(model.strengths.length).toBeGreaterThan(0);
       });
     });
 
     it('should have at least one bestFor category for each model', () => {
-      Object.values(MODEL_REGISTRY).forEach((model) => {
+      Object.values(MODEL_REGISTRY).forEach(model => {
         expect(model.bestFor.length).toBeGreaterThan(0);
       });
     });
 
     it('should have text support for all models', () => {
-      Object.values(MODEL_REGISTRY).forEach((model) => {
+      Object.values(MODEL_REGISTRY).forEach(model => {
         expect(model.supportsText).toBe(true);
       });
     });
@@ -142,7 +146,7 @@ describe('Model Selector', () => {
   describe('Model Capabilities', () => {
     it('should have exactly one model supporting video', () => {
       const videoModels = Object.values(MODEL_REGISTRY).filter(
-        (m) => m.supportsVideo
+        m => m.supportsVideo
       );
       expect(videoModels.length).toBe(1);
       expect(videoModels[0].modelId).toBe('gemini-2.0-flash-exp');
@@ -150,7 +154,7 @@ describe('Model Selector', () => {
 
     it('should have exactly one model supporting audio', () => {
       const audioModels = Object.values(MODEL_REGISTRY).filter(
-        (m) => m.supportsAudio
+        m => m.supportsAudio
       );
       expect(audioModels.length).toBe(1);
       expect(audioModels[0].modelId).toBe('gemini-2.0-flash-exp');
@@ -158,14 +162,14 @@ describe('Model Selector', () => {
 
     it('should have at least one model supporting PDF natively', () => {
       const pdfModels = Object.values(MODEL_REGISTRY).filter(
-        (m) => m.supportsPDF
+        m => m.supportsPDF
       );
       expect(pdfModels.length).toBeGreaterThan(0);
     });
 
     it('should have multiple models supporting images', () => {
       const imageModels = Object.values(MODEL_REGISTRY).filter(
-        (m) => m.supportsImages
+        m => m.supportsImages
       );
       expect(imageModels.length).toBeGreaterThan(1);
     });
