@@ -125,7 +125,6 @@ async function extractExifMetadata(
 ): Promise<Record<string, unknown> | undefined> {
 	try {
 		// Dynamic import to avoid requiring the library if not installed
-		// @ts-expect-error - exifr is an optional dependency
 		const exifr = await import("exifr").catch(() => null);
 		if (!exifr) {
 			return undefined;
@@ -179,7 +178,6 @@ async function extractPdfMetadata(filePath: string): Promise<
 > {
 	try {
 		// Dynamic import to avoid requiring the library if not installed
-		// @ts-expect-error - pdf-parse is an optional dependency
 		const pdfParse = await import("pdf-parse").catch(() => null);
 		if (!pdfParse) {
 			return undefined;
