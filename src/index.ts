@@ -12,7 +12,11 @@ import {
   ToolId,
   createFolderConfigFromDiscovery,
 } from './config';
-import { startFolderWatchers, WatchSession, DynamicWatcherManager } from './watcher';
+import {
+  startFolderWatchers,
+  WatchSession,
+  DynamicWatcherManager,
+} from './watcher';
 import { logger } from './logger';
 import { FileToolRegistry } from './tools/fileTools';
 import { AiClient } from './workflow/aiClient';
@@ -363,7 +367,9 @@ async function startDiscoveryMode(
   flags: { dryRun: boolean; runOnce: boolean; verbose: boolean }
 ): Promise<void> {
   if (!config.rootDirectories || !config.globalDefaults) {
-    throw new Error('rootDirectories and globalDefaults are required for discovery mode');
+    throw new Error(
+      'rootDirectories and globalDefaults are required for discovery mode'
+    );
   }
 
   logger.info(
@@ -423,7 +429,10 @@ async function startDiscoveryMode(
         );
 
         // Update prompt in watcher
-        dynamicWatcherManager.updatePrompt(mdConfig.folderPath, mdConfig.prompt);
+        dynamicWatcherManager.updatePrompt(
+          mdConfig.folderPath,
+          mdConfig.prompt
+        );
 
         // Update metadata
         await ensureFolderMetadata(mdConfig.folderPath, mdConfig.prompt);

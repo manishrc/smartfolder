@@ -24,7 +24,10 @@ export interface DiscoveryCallbacks {
   /** Called when a new smartfolder.md is discovered */
   onConfigAdded: (config: SmartFolderMdConfig) => void | Promise<void>;
   /** Called when a smartfolder.md is removed */
-  onConfigRemoved: (filePath: string, folderPath: string) => void | Promise<void>;
+  onConfigRemoved: (
+    filePath: string,
+    folderPath: string
+  ) => void | Promise<void>;
   /** Called when a smartfolder.md content changes */
   onConfigChanged: (config: SmartFolderMdConfig) => void | Promise<void>;
 }
@@ -58,7 +61,11 @@ export class SmartFolderMdDiscovery {
     private rootPaths: string[],
     private callbacks: DiscoveryCallbacks,
     private pollIntervalMs: number = 5000,
-    private ignorePatterns: string[] = ['**/node_modules/**', '**/.git/**', '**/.smartfolder/**']
+    private ignorePatterns: string[] = [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/.smartfolder/**',
+    ]
   ) {
     // Resolve and normalize root paths
     this.rootPaths = rootPaths.map(p => path.resolve(p));
@@ -76,7 +83,9 @@ export class SmartFolderMdDiscovery {
     }
 
     this.isRunning = true;
-    logger.info(`Starting SmartFolder discovery for roots: ${this.rootPaths.join(', ')}`);
+    logger.info(
+      `Starting SmartFolder discovery for roots: ${this.rootPaths.join(', ')}`
+    );
 
     // Initial discovery
     await this.discoverAll();
@@ -285,7 +294,10 @@ export class SmartFolderMdDiscovery {
   /**
    * Remove a config that no longer exists
    */
-  private async removeConfig(filePath: string, folderPath: string): Promise<void> {
+  private async removeConfig(
+    filePath: string,
+    folderPath: string
+  ): Promise<void> {
     this.discoveredConfigs.delete(filePath);
 
     // Stop watching this file
@@ -410,9 +422,7 @@ export class SmartFolderMdDiscovery {
     // Check for control characters (except newlines and tabs)
     const controlChars = /[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/;
     if (controlChars.test(prompt)) {
-      logger.warn(
-        `Prompt contains unusual control characters: ${filePath}`
-      );
+      logger.warn(`Prompt contains unusual control characters: ${filePath}`);
     }
 
     // Check for null bytes (potential injection)

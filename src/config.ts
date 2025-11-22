@@ -208,8 +208,15 @@ function normalizeConfig(
 
   if (usingRootDirectories) {
     // New discovery mode
-    rootDirectories = normalizeRootDirectories(typedRoot.rootDirectories, sourceDir);
-    globalDefaults = normalizeGlobalDefaults(typedRoot, ai.defaultTools, options.dryRun);
+    rootDirectories = normalizeRootDirectories(
+      typedRoot.rootDirectories,
+      sourceDir
+    );
+    globalDefaults = normalizeGlobalDefaults(
+      typedRoot,
+      ai.defaultTools,
+      options.dryRun
+    );
   } else {
     // Legacy folders mode
     if (!Array.isArray(typedRoot.folders) || typedRoot.folders.length === 0) {
@@ -283,7 +290,10 @@ function normalizeGlobalDefaults(
   const discoveryIntervalMs =
     rawConfig.discoveryIntervalMs === undefined
       ? DEFAULT_DISCOVERY_INTERVAL_MS
-      : expectPositiveInteger(rawConfig.discoveryIntervalMs, 'discoveryIntervalMs');
+      : expectPositiveInteger(
+          rawConfig.discoveryIntervalMs,
+          'discoveryIntervalMs'
+        );
 
   const dryRun =
     dryRunOverride ??
@@ -545,7 +555,7 @@ function resolveEnvValue(
   if (!ALLOWED_ENV_VARS.has(envKey)) {
     throw new SmartfolderConfigError(
       `Environment variable ${envKey} referenced by ${label} is not allowed. ` +
-      `Allowed variables: ${Array.from(ALLOWED_ENV_VARS).join(', ')}`
+        `Allowed variables: ${Array.from(ALLOWED_ENV_VARS).join(', ')}`
     );
   }
 

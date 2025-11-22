@@ -1,4 +1,12 @@
-import { mkdtemp, writeFile, unlink, mkdir, rm, chmod, symlink } from 'fs/promises';
+import {
+  mkdtemp,
+  writeFile,
+  unlink,
+  mkdir,
+  rm,
+  chmod,
+  symlink,
+} from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
 import {
@@ -18,7 +26,10 @@ function wait(ms: number): Promise<void> {
 }
 
 // Helper to create a smartfolder.md file
-async function createSmartfolderMd(dirPath: string, content: string): Promise<string> {
+async function createSmartfolderMd(
+  dirPath: string,
+  content: string
+): Promise<string> {
   const filePath = path.join(dirPath, 'smartfolder.md');
   await writeFile(filePath, content, 'utf-8');
   return filePath;
@@ -566,7 +577,10 @@ describe('SmartFolderMdDiscovery', () => {
       await discovery.start();
 
       // Create and delete rapidly
-      const filePath = await createSmartfolderMd(tempDir, 'Race condition test');
+      const filePath = await createSmartfolderMd(
+        tempDir,
+        'Race condition test'
+      );
       await unlink(filePath);
 
       // Wait for poll cycles

@@ -128,7 +128,9 @@ export async function ensureFolderMetadata(
   }
 
   // Atomic write: write to temp file then rename (security: prevent TOCTOU)
-  const tempPath = `${metadataPath}.tmp.${Date.now()}.${Math.random().toString(36).slice(2)}`;
+  const tempPath = `${metadataPath}.tmp.${Date.now()}.${Math.random()
+    .toString(36)
+    .slice(2)}`;
   try {
     await fs.writeFile(tempPath, JSON.stringify(metadata, null, 2), 'utf-8');
     await fs.rename(tempPath, metadataPath);
