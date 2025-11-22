@@ -4,6 +4,8 @@
 
 Vercel AI Gateway automatically routes requests when you use the `provider/model` format. No custom URL configuration needed!
 
+> **Token note:** Examples below reference `$AI_GATEWAY_API_KEY`, which matches Vercel’s default naming. All flows fall back to the shared `~/.smartfolder/token` file if the env var is not set.
+
 ### Example 1: Simple Download Organizer
 
 ```json

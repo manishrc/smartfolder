@@ -88,6 +88,7 @@ export interface FolderStateMetadata {
 
 /**
  * Create or update the metadata file for a watched folder
+ * Uses atomic write operations to prevent TOCTOU race conditions
  *
  * @param folderPath - Absolute path to the watched folder
  * @param prompt - Optional prompt for the folder
@@ -97,8 +98,12 @@ export async function ensureFolderMetadata(
   prompt?: string
 ): Promise<void> {
   const fs = await import('fs/promises');
+  const stateDir = getStateDirForFolder(folderPath);
   const metadataPath = getMetadataPath(folderPath);
   const hash = hashFolderPath(folderPath);
+
+  // Ensure state directory exists
+  await fs.mkdir(stateDir, { recursive: true });
 
   let metadata: FolderStateMetadata;
 
@@ -122,5 +127,40 @@ export async function ensureFolderMetadata(
     };
   }
 
-  await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
+  // Atomic write: write to temp file then rename (security: prevent TOCTOU)
+  const tempPath = `${metadataPath}.tmp.${Date.now()}.${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  try {
+    await fs.writeFile(tempPath, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.rename(tempPath, metadataPath);
+  } catch (error) {
+    // Clean up temp file if rename failed
+    try {
+      await fs.unlink(tempPath);
+    } catch {
+      // Ignore cleanup errors
+    }
+    throw error;
+  }
+}
+
+/**
+ * Delete the state directory for a watched folder
+ * This should be called when a smartfolder.md is removed
+ *
+ * @param folderPath - Absolute path to the watched folder
+ */
+export async function deleteStateForFolder(folderPath: string): Promise<void> {
+  const fs = await import('fs/promises');
+  const stateDir = getStateDirForFolder(folderPath);
+
+  try {
+    await fs.rm(stateDir, { recursive: true, force: true });
+  } catch (error) {
+    // Ignore if directory doesn't exist
+    if ((error as any).code !== 'ENOENT') {
+      throw error;
+    }
+  }
 }

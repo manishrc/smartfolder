@@ -51,6 +51,7 @@ function createFolderWatcher(
   const watcher = chokidar.watch(folder.path, {
     persistent: true,
     ignoreInitial: true,
+    depth: 0, // Only watch the immediate directory, not subdirectories
     ignored: folder.ignore.length > 0 ? folder.ignore : undefined,
     awaitWriteFinish: {
       stabilityThreshold: folder.debounceMs,
@@ -101,4 +102,120 @@ function formatDisplayPath(folderPath: string, filePath: string): string {
     return filePath;
   }
   return relative;
+}
+
+/**
+ * Dynamic watcher manager for adding/removing folder watchers on-the-fly
+ * Used in discovery mode when smartfolder.md files are added/removed
+ */
+export class DynamicWatcherManager {
+  private watchers = new Map<string, FolderWatcher>();
+
+  constructor(private options: WatchOptions) {}
+
+  /**
+   * Add a new folder watcher
+   * @param folder - Folder configuration to watch
+   * @returns Promise that resolves when watcher is ready
+   */
+  async addWatcher(folder: FolderConfig): Promise<void> {
+    const folderPath = folder.path;
+
+    // Don't create duplicate watchers
+    if (this.watchers.has(folderPath)) {
+      this.options.logger.warn(
+        { folder: folderPath },
+        'Watcher already exists for folder'
+      );
+      return;
+    }
+
+    const folderWatcher = createFolderWatcher(folder, this.options);
+    this.watchers.set(folderPath, folderWatcher);
+
+    // Wait for watcher to be ready
+    await folderWatcher.ready;
+
+    this.options.logger.info(
+      { folder: folderPath },
+      'Added dynamic watcher for folder'
+    );
+  }
+
+  /**
+   * Remove a folder watcher
+   * @param folderPath - Absolute path to the folder
+   */
+  async removeWatcher(folderPath: string): Promise<void> {
+    const folderWatcher = this.watchers.get(folderPath);
+
+    if (!folderWatcher) {
+      this.options.logger.warn(
+        { folder: folderPath },
+        'No watcher found for folder'
+      );
+      return;
+    }
+
+    await folderWatcher.watcher.close();
+    this.watchers.delete(folderPath);
+
+    this.options.logger.info(
+      { folder: folderPath },
+      'Removed dynamic watcher for folder'
+    );
+  }
+
+  /**
+   * Update the prompt for an existing watcher
+   * Note: This updates the folder config in memory
+   * @param folderPath - Absolute path to the folder
+   * @param newPrompt - Updated prompt text
+   */
+  updatePrompt(folderPath: string, newPrompt: string): void {
+    const folderWatcher = this.watchers.get(folderPath);
+
+    if (!folderWatcher) {
+      this.options.logger.warn(
+        { folder: folderPath },
+        'No watcher found for folder to update prompt'
+      );
+      return;
+    }
+
+    // Update the prompt in the folder config
+    folderWatcher.folder.prompt = newPrompt;
+
+    this.options.logger.info(
+      { folder: folderPath },
+      'Updated prompt for folder'
+    );
+  }
+
+  /**
+   * Get all currently watched folders
+   */
+  getWatchedFolders(): FolderConfig[] {
+    return Array.from(this.watchers.values()).map(fw => fw.folder);
+  }
+
+  /**
+   * Check if a folder is being watched
+   */
+  isWatching(folderPath: string): boolean {
+    return this.watchers.has(folderPath);
+  }
+
+  /**
+   * Close all watchers
+   */
+  async closeAll(): Promise<void> {
+    const closePromises = Array.from(this.watchers.values()).map(fw =>
+      fw.watcher.close()
+    );
+    await Promise.all(closePromises);
+    this.watchers.clear();
+
+    this.options.logger.info('Closed all dynamic watchers');
+  }
 }

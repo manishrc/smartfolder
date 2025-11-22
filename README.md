@@ -1,6 +1,45 @@
+![Vibe Coded](https://img.shields.io/badge/vibe-coded-A)
+
 # smartfolder
 
-`smartfolder` is a local CLI that watches folders and routes every file-system event through an AI workflow. Each folder carries its own instructions, tools, and throttling rules so you can automate chores such as labelling downloads, cleaning research notes, or triaging screenshots. Built on Vercel's AI SDK v6 beta with eight sandboxed file tools.
+`smartfolder` is a local CLI that watches folders and routes every file-system event through an AI workflow. Each folder carries its own instructions, tools, and throttling rules so you can automate chores such as labelling downloads, cleaning research notes, or triaging screenshots. Built on Vercel's AI SDK v6 beta with nine sandboxed file tools.
+
+## Quick Start
+
+The fastest way to try the CLI is to clone, build once, set your Vercel AI Gateway key, and point Smartfolder at a test directory:
+
+```bash
+git clone <repository-url>
+cd smartfolder
+npm install
+npm run build
+
+# Grab a Vercel AI Gateway key and export it
+export AI_GATEWAY_API_KEY="your-api-key-here"
+
+# Launch the watcher against any folder
+npx smartfolder ./downloads --prompt "Rename files descriptively"
+```
+
+Drop a file into `./downloads` and the AI will inspect, plan, and rename it in real time. Press `Ctrl+C` to stop the watcher. If you really don’t want to export the key, drop it once into `~/.smartfolder/token` (`echo "key" > ~/.smartfolder/token && chmod 600 ~/.smartfolder/token`)—but the env var is the default convention.
+
+#### Example: Organize research notes
+
+```bash
+npx smartfolder ./notes --prompt "Summarize each document and rename it with a descriptive filename"
+```
+
+#### Example: Classify screenshots
+
+```bash
+npx smartfolder ./screenshots --prompt "Rename images based on what's shown in them"
+```
+
+#### Example: Process invoices
+
+```bash
+npx smartfolder ./invoices --prompt "Extract invoice number and date, rename to: Invoice-{date}-{number}.pdf"
+```
 
 ## Status
 
@@ -11,118 +50,50 @@
 - ✅ History logging and file modification tracking
 - ⏭️ Packaging improvements and advanced tutorials
 
-## Installation
-
-Since this package is not yet published to npm, you'll need to clone and build it locally:
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd smartfolder
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-```
-
-**Running the CLI:**
-
-After building, you can run the CLI in several ways:
-
-1. **Using node directly (simplest):**
-   ```bash
-   node bin/smartfolder.js ./downloads --prompt "Rename files descriptively"
-   ```
-
-2. **Using npm link (for global access):**
-   ```bash
-   npm link
-   smartfolder ./downloads --prompt "Rename files descriptively"
-   ```
-   
-   This creates a global symlink so you can use `smartfolder` from anywhere.
-
-The CLI targets Node 18+ and expects an AI key via `AI_GATEWAY_API_KEY` or `ai.apiKey` in your config before invoking any workflow. 
-
-**Getting Your API Key:**
-
-To use Vercel AI Gateway, you'll need to get an API key:
-
-1. Go to the [Vercel AI Gateway API Keys page](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys%3Futm_source%3Dai_gateway_landing_page&title=Get+an+API+Key)
-2. Sign in to your Vercel account (or create one if you don't have one)
-3. Create a new API key for your team/project
-4. Copy the API key and set it as an environment variable:
-
-   ```bash
-   export AI_GATEWAY_API_KEY="your-api-key-here"
-   ```
-
-   Or add it to your shell profile (`.bashrc`, `.zshrc`, etc.) to make it persistent.
-
-**Environment Variables:**
-- `AI_GATEWAY_API_KEY`: Vercel AI Gateway API key (required for AI workflows)
-- `SMARTFOLDER_HOME`: Override the default home directory (defaults to `~/.smartfolder`)
-
 ## CLI Usage
-
-### Quick Start
-
-Point `smartfolder` at any folder with a simple prompt and watch it work:
-
-```bash
-# If using npm link (recommended for development)
-smartfolder ./downloads --prompt "Rename files to descriptive kebab-case names based on their content"
-
-# Or using node directly
-node bin/smartfolder.js ./downloads --prompt "Rename files to descriptive kebab-case names based on their content"
-```
-
-That's it! Drop a file into `./downloads` and watch the AI analyze it and rename it intelligently. No config file needed.
-
-**Try it yourself:**
-```bash
-# Organize research notes
-node bin/smartfolder.js ./notes --prompt "Summarize each document and rename it with a descriptive filename"
-
-# Classify screenshots
-node bin/smartfolder.js ./screenshots --prompt "Rename images based on what's shown in them"
-
-# Process invoices
-node bin/smartfolder.js ./invoices --prompt "Extract invoice number and date, rename to: Invoice-{date}-{number}.pdf"
-```
 
 The watcher runs until you press `Ctrl+C`. New files are automatically processed as they arrive.
 
 **Optional flags:**
 - `--dry-run`: Preview what would happen without making changes
-- `--run-once`: Process existing files and exit (useful for one-time cleanup)
+- `--run-once`: Reserved for future batch processing; today it simply exits after the initial scan and logs a TODO message
 - `--verbose`: Show detailed logs
+
+### AI Gateway Key
+
+1. Visit the [Vercel AI Gateway API Keys page](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys%3Futm_source%3Dai_gateway_landing_page&title=Get+an+API+Key).
+2. Sign in (or create an account) and generate a new key.
+3. Export it so the CLI can read it every time:
+
+   ```bash
+   export AI_GATEWAY_API_KEY="your-api-key-here"
+   ```
+
+4. Optional fallback: save the key to `~/.smartfolder/token` if you prefer not to manage environment variables.
+
+Smartfolder always looks for `AI_GATEWAY_API_KEY` first, then `~/.smartfolder/token`, then `ai.apiKey` inside your config file. Stick with the env var unless you have a specific reason not to.
+
+**Other env vars:** `SMARTFOLDER_HOME` relocates Smartfolder’s config/state directory from `~/.smartfolder` to any custom path.
 
 ### Advanced: Multi-Folder Configuration
 
 For multiple folders or custom AI settings, use a config file:
 
 ```bash
-# If using npm link
-smartfolder run --config ./smartfolder.config.json
-
-# Or using node directly
-node bin/smartfolder.js run --config ./smartfolder.config.json
+npx smartfolder run --config ./smartfolder.config.json
 ```
 
 See the [Config File](#config-file) section below for details.
 
 **Other commands:**
-- `node bin/smartfolder.js validate --config ./smartfolder.config.json`: Validate your config without running
-- `node bin/smartfolder.js --help`: Show all available options
+- `npx smartfolder validate --config ./smartfolder.config.json`: Validate your config without running
+- `npx smartfolder --help`: Show all available options
 
-**How it works:** The watcher monitors folders for new files (ignoring existing files on startup). When a file arrives, it's automatically analyzed by the AI with your prompt. Files modified by the AI are temporarily ignored to prevent loops. All activity is logged to `{folder}/.smartfolder/history.jsonl`.
+**How it works:** The watcher monitors folders for new files (ignoring existing files on startup). When a file arrives, it's automatically analyzed by the AI with your prompt. Files modified by the AI are temporarily ignored to prevent loops. All activity is logged to your Smartfolder home directory (default `~/.smartfolder/state/<folder-hash>/history.jsonl`, or `$SMARTFOLDER_HOME/state/<folder-hash>/history.jsonl` if overridden).
 
 ## Config File
 
-Configs are JSON (YAML support will be added later). A single config can describe multiple folders and optionally override default AI settings per folder. If you omit `--config`, the CLI will look for `~/.smartfolder/config.json` (override with `SMARTFOLDER_HOME`) and use it as the project/global default.
+Configs are JSON (YAML support will be added later). A single config can describe multiple folders and optionally override default AI settings per folder. If you omit `--config`, the CLI will look for `~/.smartfolder/config.json` (or `$SMARTFOLDER_HOME/.smartfolder/config.json` when set) and use it as the project/global default.
 
 ```json
 {
@@ -132,7 +103,7 @@ Configs are JSON (YAML support will be added later). A single config can describ
     "apiKey": "$AI_GATEWAY_API_KEY",
     "temperature": 0.2,
     "maxToolCalls": 8,
-    "defaultTools": ["read_file", "write_file", "rename_file", "grep", "sed", "head", "tail", "create_folder"]
+    "defaultTools": ["read_file", "write_file", "rename_file", "move_file", "grep", "sed", "head", "tail", "create_folder"]
   },
   "folders": [
     {
@@ -161,7 +132,7 @@ Configs are JSON (YAML support will be added later). A single config can describ
 - `ai`: defaults for every folder.
   - `provider`: currently `vercel` (Vercel AI Gateway only).
   - `model`: model identifier in the format `provider/model-name` (e.g., `openai/gpt-4o-mini`). The SDK automatically routes through Vercel AI Gateway.
-  - `apiKey`: resolved at runtime; supports `$ENV_VAR` expansion so configs can be committed safely. Uses `AI_GATEWAY_API_KEY` environment variable if not specified.
+  - `apiKey`: resolved at runtime; supports `$ENV_VAR` expansion so configs can be committed safely. Falls back to `AI_GATEWAY_API_KEY` or `~/.smartfolder/token` if not specified.
   - `temperature`, `maxToolCalls`: sampling + safety limits for the agent.
   - `defaultTools`: the baseline toolset; folders can override or append.
 - `folders`: array describing each watched directory.
@@ -185,6 +156,7 @@ Tools are exposed to the AI through Vercel's AI SDK v6 beta tool-calling interfa
 - `read_file(path)`: reads UTF-8 text at `path`. Rejects binary files (PDFs, images, etc.) and files >256 KB. Binary files are automatically passed as file parts to the AI.
 - `write_file(path, contents)`: creates a new file with `contents`. Fails if the file already exists, ensuring AI never overwrites user data. Parent directories are created as needed. Cannot be used for binary files.
 - `rename_file(from, to)`: renames or moves a file within the folder boundaries. **MUST preserve the original file extension**. Fails when `to` already exists or points outside the folder. This is the primary tool for renaming newly added files.
+- `move_file(from, to)`: moves an existing file or directory into a different subfolder (optionally renaming it) while keeping the file extension intact. Useful for classification pipelines that sort files into structured directories.
 - `grep(path, pattern, caseInsensitive?)`: searches for a pattern in a text file, returns matching lines with line numbers (up to 100 matches).
 - `sed(path, find, replace, caseInsensitive?)`: performs find-and-replace operations on text files. All occurrences are replaced.
 - `head(path, lines?)`: reads the first N lines of a text file (defaults to 10).
@@ -198,7 +170,7 @@ Tools are exposed to the AI through Vercel's AI SDK v6 beta tool-calling interfa
 - **Text files ≤10KB**: Full content is included in the prompt.
 - **Text files >10KB**: Automatically truncated to first 50 and last 50 lines (for CSV files, the header row is preserved separately).
 
-Each tool emits structured logs (tool id, duration, outcome) so you can audit how the agent touched your files. All tool calls are logged to `{folder}/.smartfolder/history.jsonl`.
+Each tool emits structured logs (tool id, duration, outcome) so you can audit how the agent touched your files. All tool calls are logged to the centralized history file under `~/.smartfolder/state/<folder-hash>/history.jsonl` (or `$SMARTFOLDER_HOME/state/<folder-hash>/history.jsonl`).
 
 ## Metadata Extraction
 
@@ -214,13 +186,28 @@ To enable PDF metadata extraction: `npm install pdf-parse`
 
 If these packages are not installed, the system will work normally but without metadata extraction for those file types. Metadata is extracted automatically when available and included in the AI prompt.
 
+## Development Setup
+
+If you plan to extend Smartfolder itself (change code, run tests, etc.), set up the repo locally:
+
+```bash
+git clone <repository-url>
+cd smartfolder
+npm install    # installs deps and runs the tsdx build via `prepare`
+npm test       # optional: run the unit tests
+```
+
+`npm install` runs the production build so `npx smartfolder` always executes the latest `dist/` output while you iterate.
+
 ## History & State Management
 
-Each folder gets an internal `.smartfolder/` directory automatically. The CLI uses it for:
-- **`history.jsonl`**: JSON Lines log of all workflow runs, including timestamps, file names, results, and errors
-- State tracking to prevent infinite loops (files modified by AI are temporarily ignored)
+Smartfolder keeps its own state outside of your watched folders. By default everything lives under `~/.smartfolder`, but you can relocate it by pointing `SMARTFOLDER_HOME` at another directory.
 
-The `.smartfolder/` directory is automatically ignored by watchers, so you never have to configure or clean it manually.
+For each watched folder the CLI creates a hashed directory at `~/.smartfolder/state/<folder-hash>/` (or `$SMARTFOLDER_HOME/state/<folder-hash>/`) that contains:
+- **`history.jsonl`**: JSON Lines log of all workflow runs, including timestamps, files, tool invocations, and errors
+- **`metadata.json`**: Information about the watched folder path, prompt preview, and timestamps to help resume sessions
+
+Because logs live outside the watched folders there is nothing to clean up or ignore inside your project directories.
 
 ## Roadmap
 

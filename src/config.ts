@@ -1,6 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import { getStateDirForFolder, getHistoryLogPath } from './utils/stateDir';
+import { logger } from './logger';
 
 export const SUPPORTED_TOOL_IDS = [
   'read_file',
@@ -24,9 +26,48 @@ const DEFAULT_MAX_TOOL_CALLS = 8;
 // No longer need to ignore .smartfolder - state is centralized in ~/.smartfolder/state/
 const INTERNAL_IGNORE_PATTERNS: string[] = [];
 
+/**
+ * Whitelist of allowed environment variables (security: prevent arbitrary env var access)
+ * Only these environment variables can be referenced in config files
+ */
+const ALLOWED_ENV_VARS = new Set([
+  // AI/LLM API Keys
+  'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'COHERE_API_KEY',
+  'GOOGLE_API_KEY',
+  'MISTRAL_API_KEY',
+  'GROQ_API_KEY',
+
+  // SmartFolder specific
+  'SMARTFOLDER_HOME',
+
+  // Standard safe variables
+  'HOME',
+  'USER',
+  'PATH',
+  'SHELL',
+  'LANG',
+  'LC_ALL',
+  'TZ',
+
+  // Testing
+  'TEST_SMARTFOLDER_KEY',
+  'TEST_FOLDER_SECRET',
+]);
+
 interface RawRootConfig {
   ai?: unknown;
   folders?: unknown;
+  rootDirectories?: unknown;
+  // Global settings that apply to all discovered folders
+  tools?: unknown;
+  ignore?: unknown;
+  debounceMs?: unknown;
+  pollIntervalMs?: unknown;
+  discoveryIntervalMs?: unknown;
+  env?: unknown;
+  dryRun?: unknown;
 }
 
 export type SmartfolderConfigInput = RawRootConfig;
@@ -49,6 +90,17 @@ export interface SmartfolderConfig {
     defaultTools: ToolId[];
   };
   folders: FolderConfig[];
+  // New: root directories for discovery mode
+  rootDirectories?: string[];
+  globalDefaults?: {
+    tools: ToolId[];
+    ignore: string[];
+    debounceMs: number;
+    pollIntervalMs?: number;
+    discoveryIntervalMs: number;
+    env: Record<string, string>;
+    dryRun: boolean;
+  };
 }
 
 export interface FolderConfig {
@@ -140,23 +192,132 @@ function normalizeConfig(
   const sourceDir = path.dirname(sourcePath);
   const ai = normalizeAiConfig(typedRoot.ai);
 
-  if (!Array.isArray(typedRoot.folders) || typedRoot.folders.length === 0) {
-    throw new SmartfolderConfigError('Provide at least one folder definition.');
+  // Check if using new rootDirectories mode or legacy folders mode
+  const usingRootDirectories = typedRoot.rootDirectories !== undefined;
+  const usingFolders = typedRoot.folders !== undefined;
+
+  logger.debug('Normalizing config.', {
+    sourcePath,
+    hasRootDirectories: usingRootDirectories,
+    hasFolders: usingFolders,
+    rootDirectoriesValue: typedRoot.rootDirectories,
+    foldersValue: typedRoot.folders
+  });
+
+  if (usingRootDirectories && usingFolders) {
+    throw new SmartfolderConfigError(
+      'Cannot use both `rootDirectories` and `folders` in the same config. Choose one approach.'
+    );
   }
 
-  const folders = typedRoot.folders.map((folder, index) =>
-    normalizeFolderConfig(folder, index, {
-      aiDefaultTools: ai.defaultTools,
-      sourceDir,
-      dryRunOverride: options.dryRun,
-    })
-  );
+  let folders: FolderConfig[] = [];
+  let rootDirectories: string[] | undefined;
+  let globalDefaults: SmartfolderConfig['globalDefaults'] | undefined;
+
+  if (usingRootDirectories) {
+    // New discovery mode
+    rootDirectories = normalizeRootDirectories(
+      typedRoot.rootDirectories,
+      sourceDir
+    );
+    globalDefaults = normalizeGlobalDefaults(
+      typedRoot,
+      ai.defaultTools,
+      options.dryRun
+    );
+  } else {
+    // Legacy folders mode
+    if (!Array.isArray(typedRoot.folders) || typedRoot.folders.length === 0) {
+      throw new SmartfolderConfigError(
+        `Provide either \`rootDirectories\` (for discovery mode) or \`folders\` (for static mode).\n` +
+        `Config file: ${sourcePath}\n` +
+        `Found properties: ${Object.keys(typedRoot).join(', ')}`
+      );
+    }
+
+    folders = typedRoot.folders.map((folder, index) =>
+      normalizeFolderConfig(folder, index, {
+        aiDefaultTools: ai.defaultTools,
+        sourceDir,
+        dryRunOverride: options.dryRun,
+      })
+    );
+  }
 
   return {
     sourcePath,
     sourceDir,
     ai,
     folders,
+    rootDirectories,
+    globalDefaults,
+  };
+}
+
+function normalizeRootDirectories(value: unknown, sourceDir: string): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new SmartfolderConfigError(
+      '`rootDirectories` must be an array with at least one path.'
+    );
+  }
+
+  return value.map((entry, index) => {
+    const pathStr = expectString(entry, `rootDirectories[${index}]`);
+    return resolvePath(pathStr, sourceDir);
+  });
+}
+
+function normalizeGlobalDefaults(
+  rawConfig: RawRootConfig,
+  aiDefaultTools: ToolId[],
+  dryRunOverride?: boolean
+): SmartfolderConfig['globalDefaults'] {
+  const DEFAULT_DISCOVERY_INTERVAL_MS = 5000;
+
+  const tools = rawConfig.tools
+    ? dedupeTools(validateToolList(rawConfig.tools, 'tools'))
+    : aiDefaultTools;
+
+  const ignore = dedupeStrings([
+    ...INTERNAL_IGNORE_PATTERNS,
+    ...(rawConfig.ignore
+      ? validateStringArray(rawConfig.ignore, 'ignore')
+      : []),
+  ]);
+
+  const env = rawConfig.env ? validateEnvRecord(rawConfig.env, 'env') : {};
+
+  const debounceMs =
+    rawConfig.debounceMs === undefined
+      ? DEFAULT_DEBOUNCE_MS
+      : expectNonNegativeInteger(rawConfig.debounceMs, 'debounceMs');
+
+  const pollIntervalMs =
+    rawConfig.pollIntervalMs === undefined
+      ? undefined
+      : expectPositiveInteger(rawConfig.pollIntervalMs, 'pollIntervalMs');
+
+  const discoveryIntervalMs =
+    rawConfig.discoveryIntervalMs === undefined
+      ? DEFAULT_DISCOVERY_INTERVAL_MS
+      : expectPositiveInteger(
+          rawConfig.discoveryIntervalMs,
+          'discoveryIntervalMs'
+        );
+
+  const dryRun =
+    dryRunOverride ??
+    expectOptionalBoolean(rawConfig.dryRun, 'dryRun') ??
+    false;
+
+  return {
+    tools: dedupeTools(tools),
+    ignore,
+    debounceMs,
+    pollIntervalMs,
+    discoveryIntervalMs,
+    env,
+    dryRun,
   };
 }
 
@@ -399,6 +560,15 @@ function resolveEnvValue(
   }
 
   const envKey = match[1];
+
+  // Security: Enforce environment variable whitelist
+  if (!ALLOWED_ENV_VARS.has(envKey)) {
+    throw new SmartfolderConfigError(
+      `Environment variable ${envKey} referenced by ${label} is not allowed. ` +
+        `Allowed variables: ${Array.from(ALLOWED_ENV_VARS).join(', ')}`
+    );
+  }
+
   const resolved = process.env[envKey];
 
   if (!resolved) {
@@ -414,9 +584,15 @@ function resolveEnvValue(
 }
 
 function resolvePath(targetPath: string, baseDir: string): string {
-  const candidate = path.isAbsolute(targetPath)
-    ? targetPath
-    : path.resolve(baseDir, targetPath);
+  // Expand tilde (~) to home directory
+  let expandedPath = targetPath;
+  if (targetPath.startsWith('~/') || targetPath === '~') {
+    expandedPath = targetPath.replace(/^~/, os.homedir());
+  }
+
+  const candidate = path.isAbsolute(expandedPath)
+    ? expandedPath
+    : path.resolve(baseDir, expandedPath);
   return path.normalize(candidate);
 }
 
@@ -434,4 +610,30 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function dedupeStrings(items: string[]): string[] {
   return Array.from(new Set(items));
+}
+
+/**
+ * Create a FolderConfig from a discovered smartfolder.md
+ * Used in discovery mode to create folder configs dynamically
+ */
+export function createFolderConfigFromDiscovery(
+  folderPath: string,
+  prompt: string,
+  globalDefaults: NonNullable<SmartfolderConfig['globalDefaults']>
+): FolderConfig {
+  const stateDir = getStateDirForFolder(folderPath);
+  const historyLogPath = getHistoryLogPath(folderPath);
+
+  return {
+    path: folderPath,
+    prompt,
+    tools: globalDefaults.tools,
+    ignore: globalDefaults.ignore,
+    debounceMs: globalDefaults.debounceMs,
+    pollIntervalMs: globalDefaults.pollIntervalMs,
+    env: globalDefaults.env,
+    dryRun: globalDefaults.dryRun,
+    stateDir,
+    historyLogPath,
+  };
 }

@@ -63,7 +63,7 @@ export class AiClient {
   async runWorkflow(request: AiWorkflowRequest): Promise<AiWorkflowResult> {
     if (!this.apiKey) {
       throw new Error(
-        'AI API key is missing. Set AI_GATEWAY_API_KEY or ai.apiKey in config.'
+        'AI API key is missing. Set AI_GATEWAY_API_KEY, ~/.smartfolder/token, or ai.apiKey in config.'
       );
     }
 

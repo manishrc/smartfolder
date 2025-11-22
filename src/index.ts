@@ -10,13 +10,22 @@ import {
   FolderConfig,
   SUPPORTED_TOOL_IDS,
   ToolId,
+  createFolderConfigFromDiscovery,
 } from './config';
-import { startFolderWatchers, WatchSession } from './watcher';
+import {
+  startFolderWatchers,
+  WatchSession,
+  DynamicWatcherManager,
+} from './watcher';
 import { logger } from './logger';
 import { FileToolRegistry } from './tools/fileTools';
 import { AiClient } from './workflow/aiClient';
 import { WorkflowOrchestrator } from './workflow/orchestrator';
-import { ensureFolderMetadata } from './utils/stateDir';
+import { ensureFolderMetadata, deleteStateForFolder } from './utils/stateDir';
+import {
+  SmartFolderMdDiscovery,
+  SmartFolderMdConfig,
+} from './discovery/SmartFolderMdDiscovery';
 
 const VERSION = '0.1.0';
 const SMARTFOLDER_HOME = process.env.SMARTFOLDER_HOME
@@ -24,6 +33,7 @@ const SMARTFOLDER_HOME = process.env.SMARTFOLDER_HOME
   : os.homedir();
 const GLOBAL_CONFIG_DIR = path.join(SMARTFOLDER_HOME, '.smartfolder');
 const GLOBAL_CONFIG_PATH = path.join(GLOBAL_CONFIG_DIR, 'config.json');
+const GLOBAL_TOKEN_PATH = path.join(GLOBAL_CONFIG_DIR, 'token');
 
 class SmartfolderCliError extends Error {
   constructor(message: string) {
@@ -248,10 +258,16 @@ function consumeOptionValue(
 
 async function handleRunCommand(options: RunCommandOptions): Promise<void> {
   const configPath = await resolveConfigPath('run', options.config);
+  logger.info('Loading config file.', { configPath });
   const dryRun = Boolean(options.dryRun);
   const runOnce = Boolean(options.runOnce);
   const verbose = Boolean(options.verbose);
   const config = await loadConfig(configPath, { dryRun });
+  logger.debug('Config loaded successfully.', {
+    hasRootDirectories: !!config.rootDirectories,
+    hasFolders: !!config.folders,
+    rootDirectoriesCount: config.rootDirectories?.length ?? 0
+  });
   await startRunSession(config, { dryRun, runOnce, verbose });
 }
 
@@ -311,10 +327,10 @@ async function startRunSession(
 ): Promise<void> {
   printConfigSummary(config);
 
-  const aiApiKey = resolveAiApiKey(config);
+  const aiApiKey = await resolveAiApiKey(config);
   if (!aiApiKey) {
     logger.warn(
-      'No AI API key detected. Set AI_GATEWAY_API_KEY or ai.apiKey before running workflows.'
+      'No AI API key detected. Set AI_GATEWAY_API_KEY, ~/.smartfolder/token, or ai.apiKey before running workflows.'
     );
   } else {
     logger.info({ apiKey: maskSecret(aiApiKey) }, 'AI API key detected.');
@@ -330,8 +346,6 @@ async function startRunSession(
     logger.info('Verbose logging enabled.');
   }
 
-  await ensureStateDirectories(config.folders);
-
   const toolRegistry = new FileToolRegistry();
   const aiClient = new AiClient({
     apiKey: aiApiKey,
@@ -345,6 +359,124 @@ async function startRunSession(
     logger.child({ scope: 'workflow' }),
     config.ai.maxToolCalls
   );
+
+  // Check if using discovery mode or legacy folders mode
+  if (config.rootDirectories && config.globalDefaults) {
+    await startDiscoveryMode(config, orchestrator, flags);
+  } else {
+    await startLegacyMode(config, orchestrator, flags);
+  }
+}
+
+async function startDiscoveryMode(
+  config: SmartfolderConfig,
+  orchestrator: WorkflowOrchestrator,
+  flags: { dryRun: boolean; runOnce: boolean; verbose: boolean }
+): Promise<void> {
+  if (!config.rootDirectories || !config.globalDefaults) {
+    throw new Error(
+      'rootDirectories and globalDefaults are required for discovery mode'
+    );
+  }
+
+  logger.info(
+    { rootDirectories: config.rootDirectories },
+    'Starting SmartFolder discovery mode'
+  );
+
+  const watchLogger = logger.child({ scope: 'watchers' });
+  const dynamicWatcherManager = new DynamicWatcherManager({
+    verbose: flags.verbose,
+    logger: watchLogger,
+    onFileAdded: (folder, filePath) =>
+      orchestrator.enqueueFile(folder, filePath, flags.dryRun),
+  });
+
+  // Discovery callbacks
+  const discovery = new SmartFolderMdDiscovery(
+    config.rootDirectories,
+    {
+      onConfigAdded: async (mdConfig: SmartFolderMdConfig) => {
+        logger.info(
+          { folder: mdConfig.folderPath },
+          'New smart folder discovered'
+        );
+
+        // Create folder config from discovery
+        const folderConfig = createFolderConfigFromDiscovery(
+          mdConfig.folderPath,
+          mdConfig.prompt,
+          config.globalDefaults!
+        );
+
+        // Ensure state directory exists
+        await ensureFolderMetadata(folderConfig.path, folderConfig.prompt);
+
+        // Add watcher for this folder
+        await dynamicWatcherManager.addWatcher(folderConfig);
+      },
+
+      onConfigRemoved: async (_filePath: string, folderPath: string) => {
+        logger.info(
+          { folder: folderPath },
+          'Smart folder removed (smartfolder.md deleted)'
+        );
+
+        // Remove watcher
+        await dynamicWatcherManager.removeWatcher(folderPath);
+
+        // Clean up state
+        await deleteStateForFolder(folderPath);
+      },
+
+      onConfigChanged: async (mdConfig: SmartFolderMdConfig) => {
+        logger.info(
+          { folder: mdConfig.folderPath },
+          'Smart folder config updated'
+        );
+
+        // Update prompt in watcher
+        dynamicWatcherManager.updatePrompt(
+          mdConfig.folderPath,
+          mdConfig.prompt
+        );
+
+        // Update metadata
+        await ensureFolderMetadata(mdConfig.folderPath, mdConfig.prompt);
+      },
+    },
+    config.globalDefaults.discoveryIntervalMs,
+    config.globalDefaults.ignore
+  );
+
+  // Start discovery
+  await discovery.start();
+
+  logger.info(
+    {
+      rootDirectories: config.rootDirectories.length,
+      discoveryInterval: config.globalDefaults.discoveryIntervalMs,
+    },
+    'Discovery system active. Monitoring for smartfolder.md files.'
+  );
+
+  if (flags.runOnce) {
+    await discovery.stop();
+    await dynamicWatcherManager.closeAll();
+    logger.info('Run-once mode complete. Exiting.');
+    return;
+  }
+
+  logger.info('AI workflows active. Press Ctrl+C to stop.');
+  await holdProcessOpenDiscovery(discovery, dynamicWatcherManager);
+}
+
+async function startLegacyMode(
+  config: SmartfolderConfig,
+  orchestrator: WorkflowOrchestrator,
+  flags: { dryRun: boolean; runOnce: boolean; verbose: boolean }
+): Promise<void> {
+  await ensureStateDirectories(config.folders);
 
   logger.info('Starting watchers (Chokidar) for new file events...');
   const watchLogger = logger.child({ scope: 'watchers' });
@@ -371,19 +503,38 @@ async function startRunSession(
 }
 
 function printConfigSummary(config: SmartfolderConfig): void {
-  logger.info(
-    {
-      configPath: config.sourcePath,
-      provider: config.ai.provider,
-      model: config.ai.model,
-      defaultTools: config.ai.defaultTools,
-      folderCount: config.folders.length,
-    },
-    'Loaded smartfolder config.'
-  );
-  config.folders.forEach((folder, index) => {
-    logFolderSummary(folder, index);
-  });
+  if (config.rootDirectories && config.globalDefaults) {
+    // Discovery mode
+    logger.info(
+      {
+        configPath: config.sourcePath,
+        provider: config.ai.provider,
+        model: config.ai.model,
+        defaultTools: config.ai.defaultTools,
+        mode: 'discovery',
+        rootDirectories: config.rootDirectories,
+        discoveryInterval: config.globalDefaults.discoveryIntervalMs,
+        globalIgnore: config.globalDefaults.ignore,
+      },
+      'Loaded smartfolder config (discovery mode).'
+    );
+  } else {
+    // Legacy mode
+    logger.info(
+      {
+        configPath: config.sourcePath,
+        provider: config.ai.provider,
+        model: config.ai.model,
+        defaultTools: config.ai.defaultTools,
+        mode: 'static',
+        folderCount: config.folders.length,
+      },
+      'Loaded smartfolder config (static mode).'
+    );
+    config.folders.forEach((folder, index) => {
+      logFolderSummary(folder, index);
+    });
+  }
 }
 
 function logFolderSummary(folder: FolderConfig, index: number): void {
@@ -416,8 +567,42 @@ function maskSecret(secret: string): string {
   return `${secret.slice(0, 2)}***${secret.slice(-2)}`;
 }
 
-function resolveAiApiKey(config: SmartfolderConfig): string | undefined {
-  return config.ai.apiKey || process.env.AI_GATEWAY_API_KEY;
+async function resolveAiApiKey(
+  config: SmartfolderConfig
+): Promise<string | undefined> {
+  if (config.ai.apiKey) {
+    return config.ai.apiKey;
+  }
+
+  if (process.env.AI_GATEWAY_API_KEY) {
+    return process.env.AI_GATEWAY_API_KEY;
+  }
+
+  return readTokenFile();
+}
+
+async function readTokenFile(): Promise<string | undefined> {
+  try {
+    const raw = await fs.readFile(GLOBAL_TOKEN_PATH, 'utf8');
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) {
+      logger.warn(
+        { tokenPath: GLOBAL_TOKEN_PATH },
+        'Token file detected but it is empty.'
+      );
+      return undefined;
+    }
+    return trimmed;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return undefined;
+    }
+    logger.warn(
+      { tokenPath: GLOBAL_TOKEN_PATH, err: (error as Error).message },
+      'Unable to read token file.'
+    );
+    return undefined;
+  }
 }
 
 async function ensureStateDirectories(folders: FolderConfig[]): Promise<void> {
@@ -444,6 +629,27 @@ async function holdProcessOpen(watchSession: WatchSession): Promise<void> {
       logger.info({ signal }, 'Received shutdown signal.');
       cleanup();
       await watchSession.close();
+      resolve();
+    };
+    const cleanup = () => {
+      process.off('SIGINT', handleSignal);
+      process.off('SIGTERM', handleSignal);
+    };
+    process.on('SIGINT', handleSignal);
+    process.on('SIGTERM', handleSignal);
+  });
+}
+
+async function holdProcessOpenDiscovery(
+  discovery: SmartFolderMdDiscovery,
+  watcherManager: DynamicWatcherManager
+): Promise<void> {
+  await new Promise<void>(resolve => {
+    const handleSignal = async (signal: NodeJS.Signals) => {
+      logger.info({ signal }, 'Received shutdown signal.');
+      cleanup();
+      await discovery.stop();
+      await watcherManager.closeAll();
       resolve();
     };
     const cleanup = () => {
