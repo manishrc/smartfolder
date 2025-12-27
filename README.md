@@ -2,6 +2,8 @@
 
 # smartfolder
 
+[![Alt text](https://img.youtube.com/vi/IKrUlx5P6z4/maxresdefault.jpg)](https://www.youtube.com/watch?v=IKrUlx5P6z4)
+
 `smartfolder` is a local CLI that watches folders and routes every file-system event through an AI workflow. Each folder carries its own instructions, tools, and throttling rules so you can automate chores such as labelling downloads, cleaning research notes, or triaging screenshots. Built on Vercel's AI SDK v6 beta with nine sandboxed file tools.
 
 ## Quick Start
