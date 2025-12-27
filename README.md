@@ -6,19 +6,18 @@
 
 ## Quick Start
 
-The fastest way to try the CLI is to clone, build once, set your Vercel AI Gateway key, and point Smartfolder at a test directory:
+The fastest way to try the CLI is to install it and point Smartfolder at a test directory:
 
 ```bash
-git clone <repository-url>
-cd smartfolder
-npm install
-npm run build
+# Install globally (optional)
+npm install -g @manishrc/smartfolder
 
+# Or use npx to run directly
 # Grab a Vercel AI Gateway key and export it
 export AI_GATEWAY_API_KEY="your-api-key-here"
 
 # Launch the watcher against any folder
-npx smartfolder ./downloads --prompt "Rename files descriptively"
+npx @manishrc/smartfolder ./downloads --prompt "Rename files descriptively"
 ```
 
 Drop a file into `./downloads` and the AI will inspect, plan, and rename it in real time. Press `Ctrl+C` to stop the watcher. If you really don’t want to export the key, drop it once into `~/.smartfolder/token` (`echo "key" > ~/.smartfolder/token && chmod 600 ~/.smartfolder/token`)—but the env var is the default convention.
@@ -26,19 +25,19 @@ Drop a file into `./downloads` and the AI will inspect, plan, and rename it in r
 #### Example: Organize research notes
 
 ```bash
-npx smartfolder ./notes --prompt "Summarize each document and rename it with a descriptive filename"
+npx @manishrc/smartfolder ./notes --prompt "Summarize each document and rename it with a descriptive filename"
 ```
 
 #### Example: Classify screenshots
 
 ```bash
-npx smartfolder ./screenshots --prompt "Rename images based on what's shown in them"
+npx @manishrc/smartfolder ./screenshots --prompt "Rename images based on what's shown in them"
 ```
 
 #### Example: Process invoices
 
 ```bash
-npx smartfolder ./invoices --prompt "Extract invoice number and date, rename to: Invoice-{date}-{number}.pdf"
+npx @manishrc/smartfolder ./invoices --prompt "Extract invoice number and date, rename to: Invoice-{date}-{number}.pdf"
 ```
 
 ## Status
@@ -80,14 +79,14 @@ Smartfolder always looks for `AI_GATEWAY_API_KEY` first, then `~/.smartfolder/to
 For multiple folders or custom AI settings, use a config file:
 
 ```bash
-npx smartfolder run --config ./smartfolder.config.json
+npx @manishrc/smartfolder run --config ./smartfolder.config.json
 ```
 
 See the [Config File](#config-file) section below for details.
 
 **Other commands:**
-- `npx smartfolder validate --config ./smartfolder.config.json`: Validate your config without running
-- `npx smartfolder --help`: Show all available options
+- `npx @manishrc/smartfolder validate --config ./smartfolder.config.json`: Validate your config without running
+- `npx @manishrc/smartfolder --help`: Show all available options
 
 **How it works:** The watcher monitors folders for new files (ignoring existing files on startup). When a file arrives, it's automatically analyzed by the AI with your prompt. Files modified by the AI are temporarily ignored to prevent loops. All activity is logged to your Smartfolder home directory (default `~/.smartfolder/state/<folder-hash>/history.jsonl`, or `$SMARTFOLDER_HOME/state/<folder-hash>/history.jsonl` if overridden).
 

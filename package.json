@@ -34,8 +34,21 @@
 		"singleQuote": true,
 		"trailingComma": "es5"
 	},
-	"name": "smartfolder",
+	"name": "@manishrc/smartfolder",
+	"description": "A local CLI that watches folders and routes every file-system event through an AI workflow",
 	"author": "Manish Chiniwalar",
+	"keywords": [
+		"ai",
+		"cli",
+		"file-watcher",
+		"automation",
+		"vercel-ai-sdk",
+		"file-management"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/manishrc/smartfolder.git"
+	},
 	"module": "dist/smartfolder.esm.js",
 	"dependencies": {
 		"@ai-sdk/openai": "^2.0.67",
