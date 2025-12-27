@@ -6,13 +6,9 @@
 
 ## Quick Start
 
-The fastest way to try the CLI is to install it and point Smartfolder at a test directory:
+Get started in seconds with npx:
 
 ```bash
-# Install globally (optional)
-npm install -g @manishrc/smartfolder
-
-# Or use npx to run directly
 # Grab a Vercel AI Gateway key and export it
 export AI_GATEWAY_API_KEY="your-api-key-here"
 
@@ -187,16 +183,16 @@ If these packages are not installed, the system will work normally but without m
 
 ## Development Setup
 
-If you plan to extend Smartfolder itself (change code, run tests, etc.), set up the repo locally:
+If you plan to extend Smartfolder itself (change code, run tests, etc.), clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/manishrc/smartfolder.git
 cd smartfolder
 npm install    # installs deps and runs the tsdx build via `prepare`
 npm test       # optional: run the unit tests
 ```
 
-`npm install` runs the production build so `npx smartfolder` always executes the latest `dist/` output while you iterate.
+`npm install` runs the production build so `npx @manishrc/smartfolder` always executes the latest `dist/` output while you iterate.
 
 ## History & State Management
 
